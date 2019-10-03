@@ -1,5 +1,8 @@
 import numpy as np
-from mpl_toolkits.basemap import Basemap
+try:
+  from mpl_toolkits.basemap import Basemap
+except ImportError as error:
+  print("It appears you cannot import Basemap on your computer (a depricated library). \nYou may have trouble plotting with Basemap. \nTry plotting with GMT instead. ")
 
 def geodetic_to_cartesian(pos_geo,basemap):
   ''' 
@@ -52,6 +55,7 @@ def create_default_basemap(lon_lst,lat_lst,**kwargs):
   ''' 
   creates a basemap that bounds lat_lst and lon_lst
   '''
+  print("Creating basemap for plotting with basemap")
   if (len(lon_lst) == 0) | (len(lat_lst) == 0):
     return Basemap(projection='tmerc',
                    lon_0 = -90.0,

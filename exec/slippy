@@ -26,7 +26,7 @@ p.add_argument('--dip',type=float,
 
 p.add_argument('--length',type=float,
                help='''Length of fault segment [m]''')
-1
+
 p.add_argument('--width',type=float,
                help='''Width of fault segment [m]''')  
 
@@ -94,6 +94,10 @@ p.add_argument('--slip_output_file',type=str,
                help='''Name of the output file containing the best fit 
                slip model. If this is not specified then the output 
                will be written to stdout''')
+p.add_argument('--plotter',type=str,
+               help='''Either basemap or gmt.
+               If you choose gmt, the code will not import basemap. 
+               Coordinate transforms done through Python collections''')
                 
 if os.path.exists('config.json'):
   config_file = open('config.json','r')

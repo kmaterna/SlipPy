@@ -2,6 +2,7 @@
 import slippy.io
 import slippy.basis
 import slippy.bm
+import slippy.xyz2geo
 import slippy.patch
 import slippy.gbuild
 import slippy.tikhonov
@@ -32,7 +33,8 @@ def main(config):
   insar_input_file = config['insar_input_file']  
   gps_output_file = config['gps_output_file']  
   insar_output_file = config['insar_output_file']  
-  slip_output_file = config['slip_output_file']  
+  slip_output_file = config['slip_output_file']
+  plotter = config['plotter']
   
   obs_disp_f = np.zeros((0,))
   obs_sigma_f = np.zeros((0,))
@@ -93,12 +95,19 @@ def main(config):
   if slip_output_file is None:
     slip_output_file = sys.stdout
 
-  ### convert from geodetic to cartesian
-  ###################################################################
-  bm = slippy.bm.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
+  # ### convert from geodetic to cartesian
+  # ###################################################################
+  if plotter == "basemap":
+    # import slippy.bm
+    bm = slippy.bm.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
   
-  obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   
-  seg_pos_cart = slippy.bm.geodetic_to_cartesian(seg_pos_geo,bm)
+    obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   
+    seg_pos_cart = slippy.bm.geodetic_to_cartesian(seg_pos_geo,bm)
+  else:
+    bm = slippy.xyz2geo.create_default_collection(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
+  
+    obs_pos_cart_f = slippy.xyz2geo.geodetic_to_cartesian(obs_pos_geo_f,bm)
+    seg_pos_cart = slippy.xyz2geo.geodetic_to_cartesian(seg_pos_geo,bm)  
 
   ### discretize the fault segment
   ###################################################################
@@ -155,7 +164,10 @@ def main(config):
   ### get slip patch data
   #####################################################################
   patches_pos_cart =[i.patch_to_user([0.5,1.0,0.0]) for i in patches]
-  patches_pos_geo = slippy.bm.cartesian_to_geodetic(patches_pos_cart,bm)
+  if plotter == 'basemap':
+    patches_pos_geo = slippy.bm.cartesian_to_geodetic(patches_pos_cart,bm)  # basemap
+  else:
+    patches_pos_geo = slippy.xyz2geo.cartesian_to_geodetic(patches_pos_cart,bm) # collections
   patches_strike = [i.strike for i in patches]
   patches_dip = [i.dip for i in patches]
   patches_length = [i.length for i in patches]
