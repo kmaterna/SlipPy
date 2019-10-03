@@ -66,10 +66,10 @@ def quiver(*args, **kw):
 
 class Quiver(_Quiver):
   def __init__(self,ax,*args,**kwargs):
-    if kwargs.has_key('sigma'):
+    if 'sigma' in kwargs:
       kwargs['scale_units'] = 'xy'
       kwargs['angles'] = 'xy'
-      if not kwargs.has_key('scale'):
+      if 'scale' not in kwargs:
         kwargs['scale'] = 1.0
 
     su,sv,rho = kwargs.pop('sigma',(None,None,None))

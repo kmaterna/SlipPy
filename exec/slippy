@@ -121,7 +121,7 @@ config['basis'] = basis
 if (config['gps_input_file'] is None) & (config['insar_input_file'] is None):
   raise ValueError('no data file was provided')
 
-for k,v in config.iteritems():
+for k,v in config.items():
   # make sure that no arguments other than files are None
   if (v is None) & ('file' not in k):
     raise ValueError('the argument "%s" must be provided' % k)

@@ -1,4 +1,6 @@
 build
 example/synthetic/predicted*
+*.jpg
+*.ps
 *.pyc
 *~

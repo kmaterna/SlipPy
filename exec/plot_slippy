@@ -63,6 +63,7 @@ if config['slip_file'] is not None:
     draw_grid(bm,ax=ax,dashes=[3,3])
     cbar = fig.colorbar(ps,ax=ax)
     cbar.set_label('meters')
+    plt.savefig(titles[i]+".jpg"); 
 
 ### NEW FIGURE
 bm = None
@@ -72,53 +73,55 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
   fig,ax = plt.subplots()
   ax.set_title('GPS displacements')
 
-if config['observed_gps_file'] is not None:
-  pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])
-  bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
-  pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
-  
-  bm.drawstates(ax=ax)
-  bm.drawcountries(ax=ax)
-  bm.drawcoastlines(ax=ax)
-  draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-  q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
-                           sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
-                           scale=QUIVER_SCALE,color='k')
-  ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
-  key_drawn = True
-  
-  if config['slip_file'] is not None:
-    pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
-    patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
-                                                                  length,width,
-                                                                  strike,dip)]
-    slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
-    segment_drawn = True  
-  
-if config['predicted_gps_file'] is not None:
-  pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
-  if bm is None:
+  if config['observed_gps_file'] is not None:
+    pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])
     bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
-  pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
-  
-  bm.drawstates(ax=ax)
-  bm.drawcountries(ax=ax)
-  bm.drawcoastlines(ax=ax)
-  draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-  q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
-                           sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
-                           scale=QUIVER_SCALE,color='b')
-  if not key_drawn:
+    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+    
+    bm.drawstates(ax=ax)
+    bm.drawcountries(ax=ax)
+    bm.drawcoastlines(ax=ax)
+    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+    q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
+                             sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
+                             scale=QUIVER_SCALE,color='k')
     ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
     key_drawn = True
+    
+    if config['slip_file'] is not None:
+      pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+      patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
+                                                                    length,width,
+                                                                    strike,dip)]
+      slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
+      segment_drawn = True  
+    
+  if config['predicted_gps_file'] is not None:
+    pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
+    if bm is None:
+      bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
+    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+    
+    bm.drawstates(ax=ax)
+    bm.drawcountries(ax=ax)
+    bm.drawcoastlines(ax=ax)
+    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+    q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
+                             sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
+                             scale=QUIVER_SCALE,color='b')
+    if not key_drawn:
+      ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
+      key_drawn = True
 
-  if (config['slip_file'] is not None) & (not segment_drawn):
-    pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
-    patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
-                                                                  length,width,
-                                                                  strike,dip)]
-    slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
-    segment_drawn = True  
+    if (config['slip_file'] is not None) & (not segment_drawn):
+      pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+      patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
+                                                                    length,width,
+                                                                    strike,dip)]
+      slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
+      segment_drawn = True  
+
+  fig.savefig('gps.jpg');    
 
 ### NEW FIGURE
 bm = None
@@ -126,29 +129,31 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
   fig,ax = plt.subplots()
   ax.set_title('InSAR displacements')
 
-if config['observed_insar_file'] is not None:
-  pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['observed_insar_file'])
-  if bm is None:
-    bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
+  if config['observed_insar_file'] is not None:
+    pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['observed_insar_file'])
+    if bm is None:
+      bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
 
-  pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
 
-  bm.drawstates(ax=ax)
-  bm.drawcountries(ax=ax)
-  bm.drawcoastlines(ax=ax)
-  draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-  ax.scatter(pos_cart[:,0],pos_cart[:,1],c=disp,s=200,zorder=1)
+    bm.drawstates(ax=ax)
+    bm.drawcountries(ax=ax)
+    bm.drawcoastlines(ax=ax)
+    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+    ax.scatter(pos_cart[:,0],pos_cart[:,1],c=disp,s=200,zorder=1)
 
-if config['predicted_insar_file'] is not None:
-  pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['predicted_insar_file'])
-  if bm is None:
-    bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
+  if config['predicted_insar_file'] is not None:
+    pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['predicted_insar_file'])
+    if bm is None:
+      bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
 
-  pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
-  bm.drawstates(ax=ax)
-  bm.drawcountries(ax=ax)
-  bm.drawcoastlines(ax=ax)
-  draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-  ax.scatter(pos_cart[:,0],pos_cart[:,1],c=disp,s=50,zorder=2)
+    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+    bm.drawstates(ax=ax)
+    bm.drawcountries(ax=ax)
+    bm.drawcoastlines(ax=ax)
+    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+    ax.scatter(pos_cart[:,0],pos_cart[:,1],c=disp,s=50,zorder=2)
+  fig.savefig('insar.jpg');
+
 
 plt.show()
