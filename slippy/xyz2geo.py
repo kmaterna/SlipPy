@@ -2,20 +2,20 @@ import numpy as np
 import collections
 
 Map_boundaries_tuple=collections.namedtuple("Map_boundaries_tuple",["lon_0",
-    "lat_0","llcrnrlat","llcrnrlon","urcrnrlat","urcrnrlon","proj"]);
+    "lat_0","llcrnrlat","llcrnrlon","urcrnrlat","urcrnrlon","proj","resolution"]);
 
 
 def geo2xyz(lons, lats, lon0, lat0):
   # returns units of meters
   if len(np.atleast_1d(lons))==1:
-  	x_array = (lons-lon0)*(np.cos(np.deg2rad(lat0)));
+  	x_array = (lons-lon0)*111000*(np.cos(np.deg2rad(lat0)));
   	y_array = (lats-lat0)*111000;
   else:
     x_array = np.zeros(np.shape(lons));
     y_array = np.zeros(np.shape(lats));
 
     for i in range(len(lons)):
-      x_array[i]=(lons[i]-lon0)*(np.cos(np.deg2rad(lat0)));
+      x_array[i]=(lons[i]-lon0)*111000*(np.cos(np.deg2rad(lat0)));
       y_array[i]=(lats[i]-lat0)*111000;
 
   return x_array,y_array;
@@ -88,7 +88,7 @@ def cartesian_to_geodetic(pos_cart,collection):
 
 
 
-def create_default_collection(lon_lst,lat_lst):
+def create_default_collection(lon_lst,lat_lst, proj='M5i', resolution='i'):
   ''' 
   creates a named tuple that bounds lat_lst and lon_lst
   '''
@@ -111,5 +111,5 @@ def create_default_collection(lon_lst,lat_lst):
   lon_0 = (llcrnrlon + urcrnrlon)/2.0
   lat_0 = (llcrnrlat + urcrnrlat)/2.0
   return Map_boundaries_tuple(lon_0=lon_0, lat_0=lat_0, llcrnrlat = llcrnrlat, 
-    llcrnrlon=llcrnrlon, urcrnrlat=urcrnrlat, urcrnrlon=urcrnrlon, proj='M5i'); 
+    llcrnrlon=llcrnrlon, urcrnrlat=urcrnrlat, urcrnrlon=urcrnrlon, proj='M5i', resolution=resolution); 
 

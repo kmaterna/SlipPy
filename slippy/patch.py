@@ -167,6 +167,21 @@ def draw_patches(patch_list,colors=None,ax=None,**kwargs):
   return pc 
 
   
-  
-  
-  
+def write_patches_geo(vertex_array, colornumber, outfile):
+  # Write the lat and lon coordinates of the patch into a plain text file      
+  ofile=open(outfile,'w')
+  for i in range(len(vertex_array)):
+    xy=vertex_array[i]
+    ofile.write("> -Z%.3f\n" % colornumber[i])
+    ofile.write("%.3f %.3f\n" % (xy[0][0], xy[0][1]) )
+    ofile.write("%.3f %.3f\n" % (xy[1][0], xy[1][1]) )
+    ofile.write("%.3f %.3f\n" % (xy[2][0], xy[2][1]) )
+    ofile.write("%.3f %.3f\n" % (xy[3][0], xy[3][1]) )
+    ofile.write("%.3f %.3f\n" % (xy[4][0], xy[4][1]) )
+  ofile.close()
+  return
+    
+
+
+
+

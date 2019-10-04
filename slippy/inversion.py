@@ -98,7 +98,6 @@ def main(config):
   # ### convert from geodetic to cartesian
   # ###################################################################
   if plotter == "basemap":
-    # import slippy.bm
     bm = slippy.bm.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
   
     obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   

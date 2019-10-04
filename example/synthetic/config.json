@@ -14,5 +14,5 @@
 "gps_output_file":"predicted_gps.txt",
 "insar_output_file":"predicted_insar.txt",
 "slip_output_file":"predicted_slip.txt",
-"plotter":"basemap"
+"plotter":"gmt"
 }

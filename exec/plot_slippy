@@ -2,11 +2,13 @@
 import os
 import argparse
 import slippy.bm
+import slippy.xyz2geo
 import slippy.patch
 import slippy.io
 import slippy.quiver
 import numpy as np
 import matplotlib.pyplot as plt
+import subprocess, sys
 
 QUIVER_SCALE = 0.00001
 QUIVER_KEY_LENGTH = 1.0
@@ -33,16 +35,23 @@ p.add_argument('--predicted_gps_file',type=str)
 p.add_argument('--observed_insar_file',type=str)
 p.add_argument('--predicted_insar_file',type=str)
 p.add_argument('--slip_file',type=str)
+p.add_argument('--plotter',type=str, default='basemap')
 config = vars(p.parse_args())
 
 bm = None
 
-
+# Make a map of strike slip, thrust slip, and tensile slip
 if config['slip_file'] is not None:
   input = slippy.io.read_slip_data(config['slip_file'])
   patch_pos_geo = input[0]
-  bm = slippy.bm.create_default_basemap(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
-  pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+  
+  if config['plotter']=='gmt':
+    bm = slippy.xyz2geo.create_default_collection(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
+    pos_cart = slippy.xyz2geo.geodetic_to_cartesian(patch_pos_geo,bm)
+  else:
+    bm = slippy.bm.create_default_basemap(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
+    pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+
   strike = input[1]
   dip = input[2]
   length = input[3]
@@ -53,17 +62,40 @@ if config['slip_file'] is not None:
                                                                 strike,dip)]
 
   titles = ['left-lateral slip','thrust slip','tensile slip']
-  for i in range(3):
-    fig,ax = plt.subplots()
-    ax.set_title(titles[i]) 
-    bm.drawstates(ax=ax)
-    bm.drawcountries(ax=ax)
-    bm.drawcoastlines(ax=ax)
-    ps = slippy.patch.draw_patches(patches,colors=slip[:,i],ax=ax,edgecolor='none',zorder=0,cmap='viridis')
-    draw_grid(bm,ax=ax,dashes=[3,3])
-    cbar = fig.colorbar(ps,ax=ax)
-    cbar.set_label('meters')
-    plt.savefig(titles[i]+".jpg"); 
+
+  if config['plotter']=='gmt': # run gmt plotting  
+    xy_geo_array=[]
+    for p in patches:  # put the patch vertices into geodetic coordinates
+      polys=p.get_polygon()
+      xy_cart=polys.get_xy()
+      xy_geo = slippy.xyz2geo.cartesian_to_geodetic(xy_cart,bm)
+      xy_geo_array.append(xy_geo)
+
+    for i in range(3):  # write the patches
+      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_file']+'_gmt')  # a plain text format
+      cmin=min(slip[:,i])
+      cmax=max(slip[:,i])
+      cntv=(cmax-cmin)/20
+      if (cmax-cmin)<0.001:
+        cmin=-1
+        cmax=1
+        cntv=0.05
+      title=titles[i].split()[0] 
+      subprocess.call(['gmt_plot.sh',config['slip_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
+        str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv)],shell=False);
+
+  else:  # run python plotting
+    for i in range(3):
+      fig,ax = plt.subplots()
+      ax.set_title(titles[i]) 
+      bm.drawstates(ax=ax)
+      bm.drawcountries(ax=ax)
+      bm.drawcoastlines(ax=ax)
+      ps = slippy.patch.draw_patches(patches,colors=slip[:,i],ax=ax,edgecolor='none',zorder=0,cmap='viridis')
+      draw_grid(bm,ax=ax,dashes=[3,3])
+      cbar = fig.colorbar(ps,ax=ax)
+      cbar.set_label('meters')
+      plt.savefig(titles[i]+".jpg"); 
 
 ### NEW FIGURE
 bm = None
