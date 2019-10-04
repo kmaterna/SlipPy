@@ -8,7 +8,7 @@ import slippy.io
 import slippy.quiver
 import numpy as np
 import matplotlib.pyplot as plt
-import subprocess, sys
+import subprocess
 
 QUIVER_SCALE = 0.00001
 QUIVER_KEY_LENGTH = 1.0
@@ -102,58 +102,72 @@ bm = None
 key_drawn = False
 segment_drawn = False
 if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is not None):
-  fig,ax = plt.subplots()
-  ax.set_title('GPS displacements')
 
-  if config['observed_gps_file'] is not None:
-    pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])
-    bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
-    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
-    
-    bm.drawstates(ax=ax)
-    bm.drawcountries(ax=ax)
-    bm.drawcoastlines(ax=ax)
-    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-    q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
-                             sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
-                             scale=QUIVER_SCALE,color='k')
-    ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
-    key_drawn = True
-    
-    if config['slip_file'] is not None:
-      pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
-      patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
-                                                                    length,width,
-                                                                    strike,dip)]
-      slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
-      segment_drawn = True  
-    
-  if config['predicted_gps_file'] is not None:
-    pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
-    if bm is None:
+  if config['plotter']=='gmt':
+    if config['observed_gps_file'] is not None:
+      pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])
+      slippy.io.write_gps_data(pos_geo,disp,sigma,'observed_gps.txt_gmt')
+    if config['predicted_gps_file'] is not None:
+      pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
+      slippy.io.write_gps_data(pos_geo,disp,sigma,'predicted_gps.txt_gmt')
+    bm = slippy.xyz2geo.create_default_collection(pos_geo[:,0],pos_geo[:,1],resolution='i')
+    subprocess.call(['quiver_plot.sh','predicted_gps.txt_gmt','observed_gps.txt_gmt',
+      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj],shell=False); 
+
+  else:
+
+    fig,ax = plt.subplots()
+    ax.set_title('GPS displacements')
+
+    if config['observed_gps_file'] is not None:
+      pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])
       bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
-    pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
-    
-    bm.drawstates(ax=ax)
-    bm.drawcountries(ax=ax)
-    bm.drawcoastlines(ax=ax)
-    draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
-    q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
-                             sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
-                             scale=QUIVER_SCALE,color='b')
-    if not key_drawn:
+      pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+      
+      bm.drawstates(ax=ax)
+      bm.drawcountries(ax=ax)
+      bm.drawcoastlines(ax=ax)
+      draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+      q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
+                               sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
+                               scale=QUIVER_SCALE,color='k')
       ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
       key_drawn = True
+      
+      if config['slip_file'] is not None:
+        pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+        patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
+                                                                      length,width,
+                                                                      strike,dip)]
+        slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
+        segment_drawn = True  
+      
+    if config['predicted_gps_file'] is not None:
+      pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
+      if bm is None:
+        bm = slippy.bm.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
+      pos_cart = slippy.bm.geodetic_to_cartesian(pos_geo,bm)
+      
+      bm.drawstates(ax=ax)
+      bm.drawcountries(ax=ax)
+      bm.drawcoastlines(ax=ax)
+      draw_grid(bm,ax=ax,dashes=[3,3],spacing=1.0)
+      q = slippy.quiver.quiver(pos_cart[:,0],pos_cart[:,1],disp[:,0],disp[:,1],
+                               sigma=(sigma[:,0],sigma[:,1],0.0*sigma[:,0]),
+                               scale=QUIVER_SCALE,color='b')
+      if not key_drawn:
+        ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
+        key_drawn = True
 
-    if (config['slip_file'] is not None) & (not segment_drawn):
-      pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
-      patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
-                                                                    length,width,
-                                                                    strike,dip)]
-      slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
-      segment_drawn = True  
+      if (config['slip_file'] is not None) & (not segment_drawn):
+        pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
+        patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
+                                                                      length,width,
+                                                                      strike,dip)]
+        slippy.patch.draw_patches(patches,facecolor=(0.8,0.8,0.8),ax=ax,edgecolor=(0.8,0.8,0.8),zorder=0)
+        segment_drawn = True  
 
-  fig.savefig('gps.jpg');    
+    fig.savefig('gps.jpg');    
 
 ### NEW FIGURE
 bm = None
