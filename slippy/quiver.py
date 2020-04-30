@@ -4,10 +4,10 @@ import matplotlib.axes
 import matplotlib.patches
 from matplotlib.quiver import Quiver as _Quiver
 from matplotlib.collections import EllipseCollection
-from matplotlib.backends import pylab_setup
+# from matplotlib.backends import pylab_setup
 from matplotlib.pyplot import sci
 from matplotlib.pyplot import gca
-_backend_mod, new_figure_manager, draw_if_interactive, _show = pylab_setup()
+# _backend_mod, new_figure_manager, draw_if_interactive, _show = pylab_setup()
 
 
 def compute_abphi(sigma_x,sigma_y,rho):
@@ -55,7 +55,7 @@ def quiver(*args, **kw):
       q = Quiver(ax, *args, **kw)
       ax.add_collection(q, autolim=True)
       ax.autoscale_view()
-      draw_if_interactive()
+      # draw_if_interactive()
 
     finally:
       ax.hold(washold)

@@ -34,15 +34,15 @@ p.add_argument('--observed_gps_file',type=str)
 p.add_argument('--predicted_gps_file',type=str)
 p.add_argument('--observed_insar_file',type=str)
 p.add_argument('--predicted_insar_file',type=str)
-p.add_argument('--slip_file',type=str)
+p.add_argument('--slip_output_file',type=str)
 p.add_argument('--plotter',type=str, default='basemap')
 config = vars(p.parse_args())
 
 bm = None
 
 # Make a map of strike slip, thrust slip, and tensile slip
-if config['slip_file'] is not None:
-  input = slippy.io.read_slip_data(config['slip_file'])
+if config['slip_output_file'] is not None:
+  input = slippy.io.read_slip_data(config['slip_output_file'])
   patch_pos_geo = input[0]
   
   if config['plotter']=='gmt':
@@ -72,7 +72,7 @@ if config['slip_file'] is not None:
       xy_geo_array.append(xy_geo)
 
     for i in range(3):  # write the patches
-      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_file']+'_gmt')  # a plain text format
+      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_output_file']+'_gmt')  # a plain text format
       cmin=min(slip[:,i])
       cmax=max(slip[:,i])
       cntv=(cmax-cmin)/20
@@ -81,8 +81,10 @@ if config['slip_file'] is not None:
         cmax=1
         cntv=0.05
       title=titles[i].split()[0] 
-      subprocess.call(['gmt_plot.sh',config['slip_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
-        str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv)],shell=False);
+      command = "gmt_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file'];
+      print(command);
+      subprocess.call(['gmt_plot.sh',config['slip_output_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
+        str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv),config['observed_gps_file'],config['predicted_gps_file']],shell=False);
 
   else:  # run python plotting
     for i in range(3):
@@ -134,7 +136,7 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
       ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
       key_drawn = True
       
-      if config['slip_file'] is not None:
+      if config['slip_output_file'] is not None:
         pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
         patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
                                                                       length,width,
@@ -159,7 +161,7 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
         ax.quiverkey(q,QUIVER_KEY_POS_X,QUIVER_KEY_POS_Y,QUIVER_KEY_LENGTH,str(QUIVER_KEY_LENGTH) + ' [m]')
         key_drawn = True
 
-      if (config['slip_file'] is not None) & (not segment_drawn):
+      if (config['slip_output_file'] is not None) & (not segment_drawn):
         pos_cart = slippy.bm.geodetic_to_cartesian(patch_pos_geo,bm)
         patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
                                                                       length,width,

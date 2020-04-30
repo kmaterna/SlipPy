@@ -131,5 +131,6 @@ for k,v in config.items():
     raise ValueError('the argument "%s" must be provided' % k)
 
 slippy.inversion.main(config)
+print("Done with inversion. Now use plot_slippy to visualize the results.");
 
 
