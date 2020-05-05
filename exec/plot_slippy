@@ -40,7 +40,7 @@ config = vars(p.parse_args())
 
 bm = None
 
-# Make a map of strike slip, thrust slip, and tensile slip
+### NEW FIGURE: Make maps of strike slip, thrust slip, and tensile slip
 if config['slip_output_file'] is not None:
   input = slippy.io.read_slip_data(config['slip_output_file'])
   patch_pos_geo = input[0]
@@ -99,7 +99,7 @@ if config['slip_output_file'] is not None:
       cbar.set_label('meters')
       plt.savefig(titles[i]+".jpg"); 
 
-### NEW FIGURE
+### NEW FIGURE : GPS Displacements
 bm = None
 key_drawn = False
 segment_drawn = False
@@ -113,7 +113,7 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
       pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
       slippy.io.write_gps_data(pos_geo,disp,sigma,'predicted_gps.txt_gmt')
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
-    subprocess.call(['quiver_plot.sh','predicted_gps.txt_gmt','observed_gps.txt_gmt',
+    subprocess.call(['quiver_plot.sh','observed_gps.txt_gmt','predicted_gps.txt_gmt',
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj],shell=False); 
 
   else:
@@ -171,7 +171,7 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
 
     fig.savefig('gps.jpg');    
 
-### NEW FIGURE
+### NEW FIGURE: INSAR DISPLACEMENTS
 bm = None
 if (config['observed_insar_file'] is not None) | (config['predicted_insar_file'] is not None):
   fig,ax = plt.subplots()

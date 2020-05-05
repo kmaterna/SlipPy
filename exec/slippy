@@ -112,13 +112,15 @@ config = vars(p.parse_args())
 print("User has provided %d distinct fault segments " % (len(config["faults"])) )
 
 # FOR EACH FAULT SEGMENT PROVIDED: 
+num_basis_vectors = []
 for key in config["faults"].keys():
   basis = []
   for b in ['basis1','basis2','basis3']:
-    basis_i = config["faults"][key].pop(b)
+    basis_i = config["faults"][key].pop(b,None)
     if basis_i is None:
       continue
     basis += [basis_i]
+  num_basis_vectors.append(len(basis))
 
   # check to make sure at least one basis vector was given
   if len(basis) == 0:
@@ -135,7 +137,8 @@ for key in config["faults"].keys():
 if (config['gps_input_file'] is None) & (config['insar_input_file'] is None):
   raise ValueError('no data file was provided')
 
+if len(set(num_basis_vectors))>1:
+  raise Exception('different numbers of basis vectors for your fault segments. Please fix.');
+
 slippy.inversion.main(config)
 print("Done with inversion. Now use plot_slippy to visualize the results.");
-
-
