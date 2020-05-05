@@ -9,6 +9,7 @@ import slippy.tikhonov
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
+import scipy.linalg
 import sys
 
 def reg_nnls(G,L,d):
@@ -19,15 +20,28 @@ def reg_nnls(G,L,d):
 def main(config):
   ### load in all data
   ###################################################################
-  seg_strike = config['strike']
-  seg_dip = config['dip']
-  seg_length = config['length']
-  seg_width = config['width']
-  seg_pos_geo = config['position']
-  seg_Nlength = config['Nlength']
-  seg_Nwidth = config['Nwidth']
-  slip_basis = config['basis']
-  penalty = config['penalty']
+
+  # How many fault segments are we using? 
+  segment_names=[]
+  for key,value in config.items():
+    if isinstance(value,dict):
+      segment_names.append(key)
+  print("Running inversion with %d distinct fault segments " % (len(segment_names)) )
+
+  # Repackage into a list of faults (each fault being a dict)
+  fault_list = [];
+  for segment in segment_names:
+    fault_segment = {
+      "strike":config[segment]["strike"],
+      "dip":config[segment]["dip"],
+      "length":config[segment]["length"],
+      "width":config[segment]["width"],
+      "seg_pos_geo":config[segment]["position"],
+      "Nlength":config[segment]["Nlength"],
+      "Nwidth":config[segment]["Nwidth"],
+      "slip_basis":config[segment]["basis"],
+      "penalty":config[segment]["penalty"]};
+    fault_list.append(fault_segment)
 
   gps_input_file = config['gps_input_file']  
   insar_input_file = config['insar_input_file']  
@@ -95,34 +109,75 @@ def main(config):
   if slip_output_file is None:
     slip_output_file = sys.stdout
 
-  # ### convert from geodetic to cartesian
   # ###################################################################
+  ### convert from geodetic to cartesian
+  ### discretize the fault segment
+  ### create slip basis vectors for each patch  
+  ### build regularization matrix
+  ###################################################################
+  patches = [];  # a growing list of fault patches. 
+  slip_basis_f = [];  # a growing list of basis functions for slip patches
+  total_fault_slip_basis=[];
+  patches_f = [];
+  L_array = [];
+  Ns_total=0;
+  
+  # Set up the map for the calculation
   if plotter == "basemap":
     bm = slippy.bm.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
-  
-    obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   
-    seg_pos_cart = slippy.bm.geodetic_to_cartesian(seg_pos_geo,bm)
   else:
     bm = slippy.xyz2geo.create_default_collection(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
-  
-    obs_pos_cart_f = slippy.xyz2geo.geodetic_to_cartesian(obs_pos_geo_f,bm)
-    seg_pos_cart = slippy.xyz2geo.geodetic_to_cartesian(seg_pos_geo,bm)  
 
-  ### discretize the fault segment
-  ###################################################################
-  seg = slippy.patch.Patch(seg_pos_cart,
-                           seg_length,seg_width,
-                           seg_strike,seg_dip)
-  patches = np.array(seg.discretize(seg_Nlength,seg_Nwidth))
-  Ns = len(patches)  
+  for fault in fault_list:
+    # Convert to cartesian coordinates
+    if plotter == "basemap":
+      obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   
+      fault["seg_pos_cart"] = slippy.bm.geodetic_to_cartesian(fault["seg_pos_geo"],bm)
+    else:
+      obs_pos_cart_f = slippy.xyz2geo.geodetic_to_cartesian(obs_pos_geo_f,bm)
+      fault["seg_pos_cart"] = slippy.xyz2geo.geodetic_to_cartesian(fault["seg_pos_geo"],bm)
 
-  ### create slip basis vectors for each patch
+    # Discretize fault segment
+    seg = slippy.patch.Patch(fault["seg_pos_cart"],
+                             fault["length"],fault["width"],
+                             fault["strike"],fault["dip"])
+    single_fault_patches = np.array(seg.discretize(fault["Nlength"],fault["Nwidth"]))
+    Ns = len(single_fault_patches);
+
+    # Create slip basis vectors
+    Ds = len(fault["slip_basis"])  # the number of basis vectors for this slip patch. 
+    single_fault_slip_basis = np.array([fault["slip_basis"] for j in range(Ns)])    
+    if total_fault_slip_basis==[]:
+      total_fault_slip_basis = single_fault_slip_basis;
+    else:
+      total_fault_slip_basis=np.concatenate((total_fault_slip_basis, single_fault_slip_basis),axis=0)
+    single_fault_silp_basis_f = single_fault_slip_basis.reshape((Ns*Ds,3))
+
+    # Slightly awkward packaging of slip_basis_f
+    single_fault_patches_f = single_fault_patches[:,None].repeat(Ds,axis=1).reshape((Ns*Ds,))
+    patches=np.concatenate((patches,single_fault_patches),axis=0)
+    patches_f=np.concatenate((patches_f,single_fault_patches_f),axis=0)
+    if slip_basis_f==[]:
+      slip_basis_f = single_fault_silp_basis_f;
+    else:
+      slip_basis_f=np.concatenate((slip_basis_f, single_fault_silp_basis_f),axis=0);
+
+    ### build regularization matrix
+    L = np.zeros((0,Ns*Ds))
+    indices = np.arange(Ns*Ds).reshape((Ns,Ds))
+    for i in range(Ds): 
+      connectivity = indices[:,i].reshape((fault["Nlength"],fault["Nwidth"]))
+      Li = slippy.tikhonov.tikhonov_matrix(connectivity,2,column_no=Ns*Ds)
+      L = np.vstack((Li,L))
+
+    L *= fault["penalty"] 
+    L_array.append(L)
+    Ns_total = Ns_total+Ns
+
+  ### build larger regularization matrix
   ###################################################################
-  Ds = len(slip_basis)
-  slip_basis = np.array([slip_basis for i in range(Ns)])
-  slip_basis_f = slip_basis.reshape((Ns*Ds,3))
-  patches_f = patches[:,None].repeat(Ds,axis=1).reshape((Ns*Ds,))
-    
+  L = scipy.linalg.block_diag(*L_array)
+
   ### build system matrix
   ###################################################################
   G = slippy.gbuild.build_system_matrix(obs_pos_cart_f,
@@ -135,25 +190,14 @@ def main(config):
   # weight G by the data uncertainty                                        
   G /= obs_sigma_f[:,None]
   obs_disp_f /= obs_sigma_f
-    
-  ### build regularization matrix
-  ###################################################################
-  L = np.zeros((0,Ns*Ds))
-  indices = np.arange(Ns*Ds).reshape((Ns,Ds))
-  for i in range(Ds): 
-    connectivity = indices[:,i].reshape((seg_Nlength,seg_Nwidth))
-    Li = slippy.tikhonov.tikhonov_matrix(connectivity,2,column_no=Ns*Ds)
-    L = np.vstack((Li,L))
 
-  L *= penalty
-  
   ### estimate slip and compute predicted displacement
   #####################################################################
   slip_f = reg_nnls(G,L,obs_disp_f)
   pred_disp_f = G.dot(slip_f)*obs_sigma_f
 
-  slip = slip_f.reshape((Ns,Ds))
-  cardinal_slip = slippy.basis.cardinal_components(slip,slip_basis)
+  slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
+  cardinal_slip = slippy.basis.cardinal_components(slip,total_fault_slip_basis)
 
   # split predicted displacements into insar and GPS component
   pred_disp_f_gps = pred_disp_f[:3*Ngps]

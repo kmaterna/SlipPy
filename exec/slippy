@@ -108,27 +108,38 @@ else:
 p.set_defaults(**config_default)
 config = vars(p.parse_args())
 
-basis = []
-for b in ['basis1','basis2','basis3']:
-  basis_i = config.pop(b)
-  if basis_i is None:
-    continue
-  basis += [basis_i]
+# How many fault segments are we using? 
+num_segments=0
+segment_names=[]
+for key,value in config.items():
+  if isinstance(value,dict):
+    num_segments += 1
+    segment_names.append(key)
+print("User has provided %d distinct fault segments " % (num_segments) )
 
-# check to make sure at least one basis vector was given
-if len(basis) == 0:
-  raise ValueError('at least one slip basis must be provided')
+# FOR EACH FAULT SEGMENT PROVIDED: 
+for faultseg in segment_names:
+  basis = []
+  for b in ['basis1','basis2','basis3']:
+    basis_i = config[faultseg].pop(b)
+    if basis_i is None:
+      continue
+    basis += [basis_i]
 
-config['basis'] = basis
+  # check to make sure at least one basis vector was given
+  if len(basis) == 0:
+    raise ValueError('at least one slip basis must be provided')
+
+  config[faultseg]['basis'] = basis
+  
+  for k,v in config[faultseg].items():
+    # make sure that no arguments other than files are None
+    if (v is None) & ('file' not in k):
+      raise ValueError('the argument "%s" must be provided' % k)
 
 # make sure that at least one data file is given
 if (config['gps_input_file'] is None) & (config['insar_input_file'] is None):
   raise ValueError('no data file was provided')
-
-for k,v in config.items():
-  # make sure that no arguments other than files are None
-  if (v is None) & ('file' not in k):
-    raise ValueError('the argument "%s" must be provided' % k)
 
 slippy.inversion.main(config)
 print("Done with inversion. Now use plot_slippy to visualize the results.");

@@ -45,9 +45,7 @@ def geodetic_to_cartesian(pos_geo, collection):
       array of geodetic positions. The first and second component of 
       the last axis are longitude and latitude.  The last axis can 
       have additional components (e.g. height) and they will be 
-      returned unaltered.
-
-    basemap : Basemap instance    
+      returned unaltered.  
 
   Returns
   -------
@@ -70,8 +68,6 @@ def cartesian_to_geodetic(pos_cart,collection):
   ----------
     pos_cart : (...,D) array
       array of cartesian positions 
-
-    basemap : Basemap instance
     
   Returns
   -------
