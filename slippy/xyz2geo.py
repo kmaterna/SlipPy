@@ -84,7 +84,7 @@ def cartesian_to_geodetic(pos_cart,collection):
 
 
 
-def create_default_collection(lon_lst,lat_lst, proj='M5i', resolution='i'):
+def create_default_basemap(lon_lst,lat_lst, proj='M5i', resolution='i'):
   ''' 
   creates a named tuple that bounds lat_lst and lon_lst
   '''

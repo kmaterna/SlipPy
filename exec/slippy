@@ -109,19 +109,13 @@ p.set_defaults(**config_default)
 config = vars(p.parse_args())
 
 # How many fault segments are we using? 
-num_segments=0
-segment_names=[]
-for key,value in config.items():
-  if isinstance(value,dict):
-    num_segments += 1
-    segment_names.append(key)
-print("User has provided %d distinct fault segments " % (num_segments) )
+print("User has provided %d distinct fault segments " % (len(config["faults"])) )
 
 # FOR EACH FAULT SEGMENT PROVIDED: 
-for faultseg in segment_names:
+for key in config["faults"].keys():
   basis = []
   for b in ['basis1','basis2','basis3']:
-    basis_i = config[faultseg].pop(b)
+    basis_i = config["faults"][key].pop(b)
     if basis_i is None:
       continue
     basis += [basis_i]
@@ -130,9 +124,9 @@ for faultseg in segment_names:
   if len(basis) == 0:
     raise ValueError('at least one slip basis must be provided')
 
-  config[faultseg]['basis'] = basis
-  
-  for k,v in config[faultseg].items():
+  config["faults"][key]['basis'] = basis
+
+  for k,v in config["faults"][key].items():
     # make sure that no arguments other than files are None
     if (v is None) & ('file' not in k):
       raise ValueError('the argument "%s" must be provided' % k)

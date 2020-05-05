@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import slippy.io
 import slippy.basis
-import slippy.bm
-import slippy.xyz2geo
 import slippy.patch
 import slippy.gbuild
 import slippy.tikhonov
@@ -20,27 +18,24 @@ def reg_nnls(G,L,d):
 def main(config):
   ### load in all data
   ###################################################################
-
-  # How many fault segments are we using? 
-  segment_names=[]
-  for key,value in config.items():
-    if isinstance(value,dict):
-      segment_names.append(key)
-  print("Running inversion with %d distinct fault segments " % (len(segment_names)) )
+  if config["plotter"] == "basemap":
+    import slippy.bm as plotting_library
+  else:
+    import slippy.xyz2geo as plotting_library
 
   # Repackage into a list of faults (each fault being a dict)
   fault_list = [];
-  for segment in segment_names:
+  for key in config["faults"].keys():
     fault_segment = {
-      "strike":config[segment]["strike"],
-      "dip":config[segment]["dip"],
-      "length":config[segment]["length"],
-      "width":config[segment]["width"],
-      "seg_pos_geo":config[segment]["position"],
-      "Nlength":config[segment]["Nlength"],
-      "Nwidth":config[segment]["Nwidth"],
-      "slip_basis":config[segment]["basis"],
-      "penalty":config[segment]["penalty"]};
+      "strike":config["faults"][key]["strike"],
+      "dip":config["faults"][key]["dip"],
+      "length":config["faults"][key]["length"],
+      "width":config["faults"][key]["width"],
+      "seg_pos_geo":config["faults"][key]["position"],
+      "Nlength":config["faults"][key]["Nlength"],
+      "Nwidth":config["faults"][key]["Nwidth"],
+      "slip_basis":config["faults"][key]["basis"],
+      "penalty":config["faults"][key]["penalty"]};
     fault_list.append(fault_segment)
 
   gps_input_file = config['gps_input_file']  
@@ -123,19 +118,12 @@ def main(config):
   Ns_total=0;
   
   # Set up the map for the calculation
-  if plotter == "basemap":
-    bm = slippy.bm.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
-  else:
-    bm = slippy.xyz2geo.create_default_collection(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
+  bm = plotting_library.create_default_basemap(obs_pos_geo_f[:,0],obs_pos_geo_f[:,1])
 
   for fault in fault_list:
     # Convert to cartesian coordinates
-    if plotter == "basemap":
-      obs_pos_cart_f = slippy.bm.geodetic_to_cartesian(obs_pos_geo_f,bm)   
-      fault["seg_pos_cart"] = slippy.bm.geodetic_to_cartesian(fault["seg_pos_geo"],bm)
-    else:
-      obs_pos_cart_f = slippy.xyz2geo.geodetic_to_cartesian(obs_pos_geo_f,bm)
-      fault["seg_pos_cart"] = slippy.xyz2geo.geodetic_to_cartesian(fault["seg_pos_geo"],bm)
+    obs_pos_cart_f = plotting_library.geodetic_to_cartesian(obs_pos_geo_f,bm)   
+    fault["seg_pos_cart"] = plotting_library.geodetic_to_cartesian(fault["seg_pos_geo"],bm)
 
     # Discretize fault segment
     seg = slippy.patch.Patch(fault["seg_pos_cart"],
@@ -207,10 +195,7 @@ def main(config):
   ### get slip patch data
   #####################################################################
   patches_pos_cart =[i.patch_to_user([0.5,1.0,0.0]) for i in patches]
-  if plotter == 'basemap':
-    patches_pos_geo = slippy.bm.cartesian_to_geodetic(patches_pos_cart,bm)  # basemap
-  else:
-    patches_pos_geo = slippy.xyz2geo.cartesian_to_geodetic(patches_pos_cart,bm) # collections
+  patches_pos_geo = plotting_library.cartesian_to_geodetic(patches_pos_cart,bm)
   patches_strike = [i.strike for i in patches]
   patches_dip = [i.dip for i in patches]
   patches_length = [i.length for i in patches]

@@ -46,7 +46,7 @@ if config['slip_output_file'] is not None:
   patch_pos_geo = input[0]
   
   if config['plotter']=='gmt':
-    bm = slippy.xyz2geo.create_default_collection(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
+    bm = slippy.xyz2geo.create_default_basemap(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
     pos_cart = slippy.xyz2geo.geodetic_to_cartesian(patch_pos_geo,bm)
   else:
     bm = slippy.bm.create_default_basemap(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
@@ -112,7 +112,7 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
     if config['predicted_gps_file'] is not None:
       pos_geo,disp,sigma = slippy.io.read_gps_data(config['predicted_gps_file'])
       slippy.io.write_gps_data(pos_geo,disp,sigma,'predicted_gps.txt_gmt')
-    bm = slippy.xyz2geo.create_default_collection(pos_geo[:,0],pos_geo[:,1],resolution='i')
+    bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
     subprocess.call(['quiver_plot.sh','predicted_gps.txt_gmt','observed_gps.txt_gmt',
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj],shell=False); 
 
