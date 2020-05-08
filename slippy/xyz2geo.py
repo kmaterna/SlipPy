@@ -8,15 +8,15 @@ Map_boundaries_tuple=collections.namedtuple("Map_boundaries_tuple",["lon_0",
 def geo2xyz(lons, lats, lon0, lat0):
   # returns units of meters
   if len(np.atleast_1d(lons))==1:
-  	x_array = (lons-lon0)*111000*(np.cos(np.deg2rad(lat0)));
-  	y_array = (lats-lat0)*111000;
+  	x_array = (lons-lon0)*111000.0*(np.cos(np.deg2rad(lat0)));
+  	y_array = (lats-lat0)*111000.0;
   else:
     x_array = np.zeros(np.shape(lons));
     y_array = np.zeros(np.shape(lats));
 
     for i in range(len(lons)):
-      x_array[i]=(lons[i]-lon0)*111000*(np.cos(np.deg2rad(lat0)));
-      y_array[i]=(lats[i]-lat0)*111000;
+      x_array[i]=(lons[i]-lon0)*111000.0*(np.cos(np.deg2rad(lat0)));
+      y_array[i]=(lats[i]-lat0)*111000.0;
 
   return x_array,y_array;
 
@@ -24,15 +24,15 @@ def geo2xyz(lons, lats, lon0, lat0):
 def xyz2geo(x, y, lon0, lat0):
   # takes units of meters
   if len(np.atleast_1d(x))==1:
-    lon_array = lon0 + (x/(111000*np.cos(np.deg2rad(lat0))));
-    lat_array = lat0 + (y[i]/111000);
+    lon_array = lon0 + (x/(111000.0*np.cos(np.deg2rad(lat0))));
+    lat_array = lat0 + (y/111000.0);
   else:
     lon_array = np.zeros(np.shape(x));
     lat_array = np.zeros(np.shape(y));
 
     for i in range(len(x)):
-      lon_array[i] = lon0 + (x[i]/(111000*np.cos(np.deg2rad(lat0))));
-      lat_array[i] = lat0 + (y[i]/111000);
+      lon_array[i] = lon0 + (x[i]/(111000.0*np.cos(np.deg2rad(lat0))));
+      lat_array[i] = lat0 + (y[i]/111000.0);
 
   return lon_array, lat_array;
 

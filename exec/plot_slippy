@@ -43,8 +43,8 @@ bm = None
 ### NEW FIGURE: Make maps of strike slip, thrust slip, and tensile slip
 if config['slip_output_file'] is not None:
   input = slippy.io.read_slip_data(config['slip_output_file'])
-  patch_pos_geo = input[0]
-  
+  patch_pos_geo = input[0]  # 3-column pos
+
   if config['plotter']=='gmt':
     bm = slippy.xyz2geo.create_default_basemap(patch_pos_geo[:,0],patch_pos_geo[:,1],resolution='i')
     pos_cart = slippy.xyz2geo.geodetic_to_cartesian(patch_pos_geo,bm)
@@ -63,13 +63,34 @@ if config['slip_output_file'] is not None:
 
   titles = ['left-lateral slip','thrust slip','tensile slip']
 
+  
   if config['plotter']=='gmt': # run gmt plotting  
     xy_geo_array=[]
+    fig = plt.figure(figsize=(14,14),dpi=300);
     for p in patches:  # put the patch vertices into geodetic coordinates
       polys=p.get_polygon()
       xy_cart=polys.get_xy()
+      
+    #   # New stuff
+    #   x_cart=[item[0] for item in xy_cart];
+    #   y_cart=[item[1] for item in xy_cart];
+    #   plt.plot(x_cart, y_cart,'-b',linewidth=0.2);
+    #   continue;
+    # plt.savefig("Test.png");      
+
+    # fig = plt.figure(figsize=(14,14),dpi=300);
+    # for p in patches:
+      # polys=p.get_polygon()
+      # xy_cart=polys.get_xy()      
       xy_geo = slippy.xyz2geo.cartesian_to_geodetic(xy_cart,bm)
       xy_geo_array.append(xy_geo)
+      # x_geo=[item[0] for item in xy_geo];
+      # y_geo=[item[1] for item in xy_geo];
+      # plt.plot(x_geo, y_geo,'-b',linewidth=0.2); 
+    # plt.savefig("geo_test.png");
+    
+
+
 
     for i in range(3):  # write the patches
       slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_output_file']+'_gmt')  # a plain text format
@@ -204,4 +225,4 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
   fig.savefig('insar.jpg');
 
 
-plt.show()
+# plt.show()
