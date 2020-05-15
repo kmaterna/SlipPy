@@ -94,11 +94,11 @@ def create_default_basemap(lon_lst,lat_lst, proj='M5i', resolution='i'):
     
   lon_buff = (max(lon_lst) - min(lon_lst))/20.0
   lat_buff = (max(lat_lst) - min(lat_lst))/20.0
-  if lon_buff < 0.2:
-    lon_buff = 0.2
+  if lon_buff < 0.1:
+    lon_buff = 0.1
 
-  if lat_buff < 0.2:
-    lat_buff = 0.2
+  if lat_buff < 0.1:
+    lat_buff = 0.1
 
   llcrnrlon = min(lon_lst) - lon_buff
   llcrnrlat = min(lat_lst) - lat_buff
@@ -107,5 +107,5 @@ def create_default_basemap(lon_lst,lat_lst, proj='M5i', resolution='i'):
   lon_0 = (llcrnrlon + urcrnrlon)/2.0
   lat_0 = (llcrnrlat + urcrnrlat)/2.0
   return Map_boundaries_tuple(lon_0=lon_0, lat_0=lat_0, llcrnrlat = llcrnrlat, 
-    llcrnrlon=llcrnrlon, urcrnrlat=urcrnrlat, urcrnrlon=urcrnrlon, proj='M5i', resolution=resolution); 
+    llcrnrlon=llcrnrlon, urcrnrlat=urcrnrlat, urcrnrlon=urcrnrlon, proj=proj, resolution=resolution); 
 
