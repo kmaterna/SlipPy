@@ -30,8 +30,8 @@ def draw_grid(bm,spacing=1.0,**kwargs):
 p = argparse.ArgumentParser(
       description='''Plots the results of SlipPy''')
       
-p.add_argument('--observed_gps_file',type=str)
-p.add_argument('--predicted_gps_file',type=str)
+p.add_argument('--observed_gps_file',type=str, default='None');
+p.add_argument('--predicted_gps_file',type=str, default='None');
 p.add_argument('--observed_insar_file',type=str)
 p.add_argument('--predicted_insar_file',type=str)
 p.add_argument('--slip_output_file',type=str)
@@ -40,7 +40,7 @@ config = vars(p.parse_args())
 
 bm = None
 
-### NEW FIGURE: Make maps of strike slip, thrust slip, and tensile slip
+### NEW FIGURE: Make maps of strike slip, thrust slip, and tensile slip (with GPS vectors and model fit, if we have them)
 if config['slip_output_file'] is not None:
   input = slippy.io.read_slip_data(config['slip_output_file'])
   patch_pos_geo = input[0]  # 3-column pos
@@ -73,7 +73,7 @@ if config['slip_output_file'] is not None:
       xy_geo = slippy.xyz2geo.cartesian_to_geodetic(xy_cart,bm)
       xy_geo_array.append(xy_geo);
 
-    for i in range(3):  # write the patches
+    for i in range(3):  # write the patches and plot each component of slip
       slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_output_file']+'_gmt')  # a plain text format
       cmin=min(slip[:,i])
       cmax=max(slip[:,i])
@@ -83,9 +83,9 @@ if config['slip_output_file'] is not None:
         cmax=1
         cntv=0.05
       title=titles[i].split()[0] 
-      command = "gmt_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file'];
+      command = "fault_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file'];
       print(command);
-      subprocess.call(['gmt_plot.sh',config['slip_output_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
+      subprocess.call(['fault_plot.sh',config['slip_output_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
         str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv),config['observed_gps_file'],config['predicted_gps_file']],shell=False);
 
   else:  # run python plotting
@@ -105,14 +105,15 @@ if config['slip_output_file'] is not None:
 bm = None
 key_drawn = False
 segment_drawn = False
-if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is not None):
-  if config['plotter']=='gmt':
+if (config['observed_gps_file'] is not 'None') | (config['predicted_gps_file'] is not 'None'):
+  print("Plotting GPS observed and modeled displacements.")
+  if config['plotter']=='gmt':  # gmt plotting of gps displacements, with fault shown
     pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])    
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
     subprocess.call(['quiver_plot.sh',config['observed_gps_file'],config['predicted_gps_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj],shell=False); 
 
-  else:
+  else:  # python plotting of gps displacements
 
     fig,ax = plt.subplots()
     ax.set_title('GPS displacements')
@@ -171,13 +172,15 @@ if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is 
 ### NEW FIGURE: INSAR DISPLACEMENTS
 bm = None
 if (config['observed_insar_file'] is not None) | (config['predicted_insar_file'] is not None):
-  if config['plotter']=="gmt":
+  print("Plotting InSAR observed and modeled displacements.")
+  if config['plotter']=="gmt":  # gmt plotting of insar displacements
     pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['observed_insar_file'])
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_insar_file'],config['predicted_insar_file'],
-      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(np.nanmin(disp)),str(np.nanmax(disp)),str(1)],shell=False); 
+      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
+      str(1000*np.nanmax(disp)),str(1),config['slip_output_file']+'_gmt'],shell=False); 
 
-  else:
+  else:  # python plotting of insar displacements
     fig,ax = plt.subplots()
     ax.set_title('InSAR displacements')
 
