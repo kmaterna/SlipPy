@@ -77,6 +77,15 @@ p.add_argument('--insar_input_file',type=str,
                V_e, V_n, V_u, where V is the look vector from the 
                ground to the satellite. This argument can be ignored 
                if there is no InSAR data.''')
+
+p.add_argument('--leveling_input_file',type=str,
+               help='''Name of the Leveling input file. Must contain 
+               one header row, which gets ignored, and 7 columns: 
+               lon[degrees], lat[degrees], disp_los[m], sigma_los[m], 
+               0, 0, 1, where [0,0,1] is the basis vector for 
+               leveling measurements. The first row is the datum. 
+               This argument can be ignored 
+               if there is no leveling data.''')
                
 p.add_argument('--gps_output_file',type=str,
                help='''Name of the output file containing the GPS 
@@ -86,6 +95,12 @@ p.add_argument('--gps_output_file',type=str,
 
 p.add_argument('--insar_output_file',type=str,
                help='''Name of the output file containing the InSAR 
+               displacements predicted by the best fit slip model. If 
+               this is not specified then the output will be written 
+               to stdout''')
+
+p.add_argument('--leveling_output_file',type=str,
+               help='''Name of the output file containing the leveling
                displacements predicted by the best fit slip model. If 
                this is not specified then the output will be written 
                to stdout''')
@@ -134,7 +149,7 @@ for key in config["faults"].keys():
       raise ValueError('the argument "%s" must be provided' % k)
 
 # make sure that at least one data file is given
-if (config['gps_input_file'] is None) & (config['insar_input_file'] is None):
+if (config['gps_input_file'] is None) & (config['insar_input_file'] is None) & (config['leveling_input_file'] is None):
   raise ValueError('no data file was provided')
 
 if len(set(num_basis_vectors))>1:
