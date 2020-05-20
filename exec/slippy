@@ -75,7 +75,8 @@ p.add_argument('--insar_input_file',type=str,
                one header row, which gets ignored, and 7 columns: 
                lon[degrees], lat[degrees], disp_los[m], sigma_los[m], 
                V_e, V_n, V_u, where V is the look vector from the 
-               ground to the satellite. This argument can be ignored 
+               ground to the satellite. Positive displacements 
+               are toward the satellite. This argument can be ignored 
                if there is no InSAR data.''')
 
 p.add_argument('--leveling_input_file',type=str,
@@ -83,8 +84,8 @@ p.add_argument('--leveling_input_file',type=str,
                one header row, which gets ignored, and 7 columns: 
                lon[degrees], lat[degrees], disp_los[m], sigma_los[m], 
                0, 0, 1, where [0,0,1] is the basis vector for 
-               leveling measurements. The first row is the datum. 
-               This argument can be ignored 
+               leveling measurements. Positive displacements are up. 
+               The first row is the datum. This argument can be ignored 
                if there is no leveling data.''')
                
 p.add_argument('--gps_output_file',type=str,

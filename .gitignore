@@ -4,4 +4,4 @@ example/synthetic/*_gmt
 *.jpg
 *.ps
 *.pyc
-*~
+*.py~

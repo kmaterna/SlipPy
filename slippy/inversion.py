@@ -191,33 +191,32 @@ def main(config):
     Ns_total = Ns_total+Ns
 
   # Build System Matrix
+  ###################################################################  
   G = slippy.gbuild.build_system_matrix(obs_pos_cart_f, 
                                         patches_f,
                                         obs_basis_f,
                                         slip_basis_f, 
                                         Nleveling) 
-  
+
+  ### weigh system matrix and data by the uncertainty
+  ###################################################################  
+  G /= obs_sigma_f[:,None]
+  obs_disp_f /= obs_sigma_f  
 
   if Nleveling>0:  # IF LEVELING: 
-    ### build larger regularization matrix
+    ### Leveling: build larger regularization matrix
     L_array.append([0]);
     L = scipy.linalg.block_diag(*L_array)   
-
-    ### weigh system matrix and data by the uncertainty
-    ###################################################################  
-    G /= obs_sigma_f[:,None]
-    obs_disp_f /= obs_sigma_f
 
     ### estimate slip and compute predicted displacement
     #####################################################################
     slip_f = reg_nnls(G,L,obs_disp_f)
     pred_disp_f = G.dot(slip_f)*obs_sigma_f 
-
     slip_f = slip_f[0:-1];  # LEVELING: Will ignore the last model parameter, which is the leveling offset
     slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
     cardinal_slip = slippy.basis.cardinal_components(slip,total_fault_slip_basis)
 
-    # split predicted displacements into insar and GPS component  # LEVELING: Things just got more complicated
+    # split predicted displacements into insar and GPS and Leveling components
     pred_disp_f_gps = pred_disp_f[:3*Ngps]
     pred_disp_gps = pred_disp_f_gps.reshape((Ngps,3))
     pred_disp_insar = pred_disp_f[3*Ngps:3*Ngps+Ninsar]
@@ -226,11 +225,6 @@ def main(config):
   if Nleveling==0:
     # build regularization matrix
     L = scipy.linalg.block_diag(*L_array) 
-
-    ### weigh system matrix and data by the uncertainty
-    ###################################################################
-    G /= obs_sigma_f[:,None]
-    obs_disp_f /= obs_sigma_f
 
     ### estimate slip and compute predicted displacement
     #####################################################################
