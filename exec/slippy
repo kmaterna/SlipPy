@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+import os, sys, subprocess
 import argparse
 import json
 import slippy.inversion
@@ -14,6 +14,8 @@ p = argparse.ArgumentParser(
       the current directory and be named "config.json". See the 
       contents of SlipPy/example/synthetic for example config files 
       and input files''')
+
+p.add_argument('configfile',default='config.json')
       
 p.add_argument('-v','--verbose',action='count',default=0,
                help='''controls verbosity''')
@@ -87,6 +89,10 @@ p.add_argument('--leveling_input_file',type=str,
                leveling measurements. Positive displacements are up. 
                The first row is the datum. This argument can be ignored 
                if there is no leveling data.''')
+
+p.add_argument('--output_dir',type=str,default="",
+               help='''Name of the output directory for GPS, InSAR, 
+               and slip model files. ''')
                
 p.add_argument('--gps_output_file',type=str,
                help='''Name of the output file containing the GPS 
@@ -110,22 +116,30 @@ p.add_argument('--slip_output_file',type=str,
                help='''Name of the output file containing the best fit 
                slip model. If this is not specified then the output 
                will be written to stdout''')
+
 p.add_argument('--alpha',type=str,default=0,
                help='''optional smoothing parameter controlling magnitude of slip.
                Stronger alpha means stronger Tikhonov Regularization.''')
+
 p.add_argument('--plotter',type=str,
                help='''Either basemap or gmt.
                If you choose gmt, the code will not import basemap. 
                Coordinate transforms done through Python collections''')
-                
-if os.path.exists('config.json'):
-  config_file = open('config.json','r')
+
+if len(sys.argv)==1:
+  print("Error! Please provide the name of the config file.  Ex: slippy config.json");
+  sys.exit(0);
+else:
+  config_filename = sys.argv[1];
+if os.path.exists(config_filename):
+  config_file = open(config_filename,'r');
   config_default = json.load(config_file)
 else:
   config_default = {}
 
 p.set_defaults(**config_default)
 config = vars(p.parse_args())
+subprocess.call(['cp',config_filename,config['output_dir']],shell=False);
 
 # How many fault segments are we using? 
 print("User has provided %d distinct fault segments " % (len(config["faults"])) )

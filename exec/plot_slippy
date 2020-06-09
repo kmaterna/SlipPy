@@ -37,6 +37,7 @@ p.add_argument('--predicted_insar_file',type=str);
 p.add_argument('--observed_leveling_file',type=str);
 p.add_argument('--predicted_leveling_file',type=str);
 p.add_argument('--slip_output_file',type=str, default=None);
+p.add_argument('--output_dir',type=str,default='');
 p.add_argument('--plotter',type=str, default='gmt')
 config = vars(p.parse_args())
 
@@ -86,10 +87,10 @@ if config['slip_output_file'] is not None:
         cmax=1
         cntv=0.05
       title=titles[i].split()[0] 
-      command = "fault_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file'];
+      command = "fault_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file']+" "+config['output_dir'];
       print(command);
       subprocess.call(['fault_plot.sh',config['slip_output_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
-        str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv),config['observed_gps_file'],config['predicted_gps_file']],shell=False);
+        str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv),config['observed_gps_file'],config['predicted_gps_file'],config['output_dir']],shell=False);
 
   else:  # run python plotting
     for i in range(3):
@@ -114,7 +115,7 @@ if (config['observed_gps_file'] is not 'None') | (config['predicted_gps_file'] i
     pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])    
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
     subprocess.call(['quiver_plot.sh',config['observed_gps_file'],config['predicted_gps_file'],
-      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj],shell=False); 
+      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,config["output_dir"]],shell=False); 
 
   else:  # python plotting of gps displacements
 
@@ -181,7 +182,7 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_insar_file'],config['predicted_insar_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
-      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','insar'],shell=False); 
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','insar',config["output_dir"]],shell=False); 
 
   else:  # python plotting of insar displacements
     fig,ax = plt.subplots()
@@ -223,5 +224,5 @@ if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_leveling_file'],config['predicted_leveling_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
-      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling'],shell=False); 
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling',config["output_dir"]],shell=False); 
 

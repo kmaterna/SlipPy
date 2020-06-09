@@ -8,9 +8,10 @@ ll2=$4
 ur1=$5
 ur2=$6
 proj=$7
+outdir=$8
 
 range=$ll1/$ur1/$ll2/$ur2
-output="displacements.ps"
+output=$outdir"displacements.ps"
 horiz_scale=100
 
 # Vertical scale

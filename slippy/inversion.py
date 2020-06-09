@@ -20,6 +20,12 @@ def reg_nnls(G,L,alpha,d):
     dext = np.concatenate( (dext, zero_vector) )
   return scipy.optimize.nnls(Gext,dext)[0]
 
+def get_output_filenames(output_dir, filename):
+  if filename==None:
+    return None;
+  else:
+    return output_dir+filename;
+
 def main(config):
   ### load in all data
   ###################################################################
@@ -46,10 +52,10 @@ def main(config):
   gps_input_file = config['gps_input_file']  
   insar_input_file = config['insar_input_file']
   leveling_input_file = config['leveling_input_file']  
-  gps_output_file = config['gps_output_file']  
-  insar_output_file = config['insar_output_file']  
-  leveling_output_file = config['leveling_output_file']
-  slip_output_file = config['slip_output_file']
+  gps_output_file = get_output_filenames(config['output_dir'],config['gps_output_file'])
+  insar_output_file = get_output_filenames(config['output_dir'],config['insar_output_file'])
+  leveling_output_file = get_output_filenames(config['output_dir'],config['leveling_output_file'])
+  slip_output_file = get_output_filenames(config['output_dir'],config['slip_output_file'])
   alpha = config['alpha']
   plotter = config['plotter']
   
@@ -203,8 +209,6 @@ def main(config):
                                         obs_basis_f,
                                         slip_basis_f, 
                                         Nleveling) 
-  # plt.imshow(G,vmin=-0.01, vmax=0.01, aspect=1/10);
-  # plt.show()
 
   ### weigh system matrix and data by the uncertainty
   ###################################################################  

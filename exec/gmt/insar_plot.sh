@@ -16,9 +16,10 @@ scale_high=$9
 scale_int=${10}
 slip_file=${11}
 plottype=${12}
+outdir=${13}
 
 range=$ll1/$ur1/$ll2/$ur2
-output=$plottype"_displacements.ps"
+output=$outdir/$plottype"_displacements.ps"
 
 # LOS scale
 gmt makecpt -T$scale_low/$scale_high/$scale_int -Cjet -D > mycpt.cpt

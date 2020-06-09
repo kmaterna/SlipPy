@@ -14,10 +14,11 @@ cmax=$9
 cntv=${10}
 observed_gps_file=${11}
 predicted_gps_file=${12}
+outdir=${13}
 
 
 range=$ll1/$ur1/$ll2/$ur2
-output=$title.ps
+output=$outdir/$title.ps
 
 gmt makecpt -T$cmin/$cmax/$cntv -Cwysiwyg > mycpt.cpt
 
