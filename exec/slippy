@@ -110,6 +110,9 @@ p.add_argument('--slip_output_file',type=str,
                help='''Name of the output file containing the best fit 
                slip model. If this is not specified then the output 
                will be written to stdout''')
+p.add_argument('--alpha',type=str,default=0,
+               help='''optional smoothing parameter controlling magnitude of slip.
+               Stronger alpha means stronger Tikhonov Regularization.''')
 p.add_argument('--plotter',type=str,
                help='''Either basemap or gmt.
                If you choose gmt, the code will not import basemap. 

@@ -32,15 +32,17 @@ p = argparse.ArgumentParser(
       
 p.add_argument('--observed_gps_file',type=str, default='None');
 p.add_argument('--predicted_gps_file',type=str, default='None');
-p.add_argument('--observed_insar_file',type=str)
-p.add_argument('--predicted_insar_file',type=str)
-p.add_argument('--slip_output_file',type=str)
+p.add_argument('--observed_insar_file',type=str);
+p.add_argument('--predicted_insar_file',type=str);
+p.add_argument('--observed_leveling_file',type=str);
+p.add_argument('--predicted_leveling_file',type=str);
+p.add_argument('--slip_output_file',type=str, default=None);
 p.add_argument('--plotter',type=str, default='gmt')
 config = vars(p.parse_args())
 
 bm = None
 
-### NEW FIGURE: Make maps of strike slip, thrust slip, and tensile slip (with GPS vectors and model fit, if we have them)
+### FIGURE: Make maps of strike slip, thrust slip, and tensile slip (with GPS vectors and model fit, if we have them)
 if config['slip_output_file'] is not None:
   input = slippy.io.read_slip_data(config['slip_output_file'])
   patch_pos_geo = input[0]  # 3-column pos
@@ -77,6 +79,7 @@ if config['slip_output_file'] is not None:
       slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_output_file']+'_gmt')  # a plain text format
       cmin=min(slip[:,i])
       cmax=max(slip[:,i])
+      print("Average %s slip is %f m" % (titles[i], np.sum(slip[:,i])/len(slip[:,i]) ) );
       cntv=(cmax-cmin)/20
       if (cmax-cmin)<0.001:
         cmin=-1
@@ -178,7 +181,7 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_insar_file'],config['predicted_insar_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
-      str(1000*np.nanmax(disp)),str(1),config['slip_output_file']+'_gmt'],shell=False); 
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','insar'],shell=False); 
 
   else:  # python plotting of insar displacements
     fig,ax = plt.subplots()
@@ -210,3 +213,15 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
       ax.scatter(pos_cart[:,0],pos_cart[:,1],c=disp,s=50,zorder=2)
     fig.savefig('insar.jpg');
     # plt.show()
+
+### NEW FIGURE: LEVELING DISPLACEMENTS
+bm = None
+if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_file'] is not None):
+  print("Plotting Leveling observed and modeled displacements.")
+  if config['plotter']=="gmt":  # gmt plotting of insar displacements
+    pos_geo,disp,sigma,basis = slippy.io.read_insar_data(config['observed_leveling_file'])
+    bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
+    subprocess.call(['insar_plot.sh',config['observed_leveling_file'],config['predicted_leveling_file'],
+      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling'],shell=False); 
+

@@ -10,9 +10,14 @@ import scipy.optimize
 import scipy.linalg
 import sys
 
-def reg_nnls(G,L,d):
+def reg_nnls(G,L,alpha,d):
   dext = np.concatenate((d,np.zeros(L.shape[0])))
   Gext = np.vstack((G,L))
+  if alpha > 0:  # Minimum norm solution. Aster and Thurber, Equation 4.5.
+    alphaI = alpha * np.identity(np.shape(Gext)[1])
+    zero_vector = np.zeros( (np.shape(Gext)[1],) )
+    Gext = np.vstack((Gext, alphaI))
+    dext = np.concatenate( (dext, zero_vector) )
   return scipy.optimize.nnls(Gext,dext)[0]
 
 def main(config):
@@ -45,6 +50,7 @@ def main(config):
   insar_output_file = config['insar_output_file']  
   leveling_output_file = config['leveling_output_file']
   slip_output_file = config['slip_output_file']
+  alpha = config['alpha']
   plotter = config['plotter']
   
   # The overall objects
@@ -197,6 +203,8 @@ def main(config):
                                         obs_basis_f,
                                         slip_basis_f, 
                                         Nleveling) 
+  # plt.imshow(G,vmin=-0.01, vmax=0.01, aspect=1/10);
+  # plt.show()
 
   ### weigh system matrix and data by the uncertainty
   ###################################################################  
@@ -205,14 +213,15 @@ def main(config):
 
   if Nleveling>0:  # IF LEVELING: 
     ### Leveling: build larger regularization matrix
-    L_array.append([0]);
+    L_array.append([0]);  # one more model parameter, for the leveling offset
     L = scipy.linalg.block_diag(*L_array)   
 
     ### estimate slip and compute predicted displacement
     #####################################################################
-    slip_f = reg_nnls(G,L,obs_disp_f)
+    slip_f = reg_nnls(G,L,alpha,obs_disp_f)
     pred_disp_f = G.dot(slip_f)*obs_sigma_f 
     slip_f = slip_f[0:-1];  # LEVELING: Will ignore the last model parameter, which is the leveling offset
+    leveling_offset = slip_f[-1];
     slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
     cardinal_slip = slippy.basis.cardinal_components(slip,total_fault_slip_basis)
 
@@ -221,6 +230,9 @@ def main(config):
     pred_disp_gps = pred_disp_f_gps.reshape((Ngps,3))
     pred_disp_insar = pred_disp_f[3*Ngps:3*Ngps+Ninsar]
     pred_disp_leveling = pred_disp_f[3*Ngps+Ninsar:];
+    print("Leveling Offset = %f m " % (leveling_offset) );
+    if abs(leveling_offset)<0.0000001:
+      print("WARNING: Leveling offset close to zero. Consider a negative offset in G.")
 
   if Nleveling==0:
     # build regularization matrix
@@ -228,7 +240,7 @@ def main(config):
 
     ### estimate slip and compute predicted displacement
     #####################################################################
-    slip_f = reg_nnls(G,L,obs_disp_f)
+    slip_f = reg_nnls(G,L,alpha,obs_disp_f)
     pred_disp_f = G.dot(slip_f)*obs_sigma_f 
     slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
     cardinal_slip = slippy.basis.cardinal_components(slip,total_fault_slip_basis)

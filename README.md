@@ -91,7 +91,7 @@ The input and output files for insar data also have the same format. Here are th
 -84.5774 43.8300 -0.0222 0.0100 0.5773 0.5773 0.5773
 ...
 ```
-disp_los, sigma_los are the displacements and uncertainties along the look direction. The look direction, which is the vector pointing from the observation point to the satellite, is given by Ve, V_n, and V_u. The line of sight vector should be normalized to 1.0.      
+disp_los, sigma_los are the displacements and uncertainties along the look direction. The look direction, which is the vector pointing from the observation point to the satellite, is given by Ve, V_n, and V_u. In other words, the LOS motion away from the satellite is negative; towards the satellite is positive. The line of sight vector should be normalized to 1.0.      
 
 SlipPy produces an output file containing the geometric and slip information for each fault patch.  Here is an example
 ```
