@@ -6,6 +6,7 @@ import slippy.xyz2geo
 import slippy.patch
 import slippy.io
 import slippy.quiver
+import slippy.metrics
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
@@ -38,6 +39,7 @@ p.add_argument('--observed_leveling_file',type=str);
 p.add_argument('--predicted_leveling_file',type=str);
 p.add_argument('--slip_output_file',type=str, default=None);
 p.add_argument('--output_dir',type=str,default='');
+p.add_argument('--config_file',type=str,default='slippy_config.json');
 p.add_argument('--plotter',type=str, default='gmt')
 config = vars(p.parse_args())
 
@@ -226,3 +228,5 @@ if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
       str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling',config["output_dir"]],shell=False); 
 
+### GET THE METRICS FOR THIS INVERSION
+slippy.metrics.main_function(config['config_file']);

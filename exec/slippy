@@ -139,6 +139,7 @@ else:
 
 p.set_defaults(**config_default)
 config = vars(p.parse_args())
+subprocess.call(["mkdir","-p",config['output_dir']],shell=False);
 subprocess.call(['cp',config_filename,config['output_dir']],shell=False);
 
 # How many fault segments are we using? 
