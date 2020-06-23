@@ -39,7 +39,7 @@ p.add_argument('--observed_leveling_file',type=str);
 p.add_argument('--predicted_leveling_file',type=str);
 p.add_argument('--slip_output_file',type=str, default=None);
 p.add_argument('--output_dir',type=str,default='');
-p.add_argument('--config_file',type=str,default='slippy_config.json');
+p.add_argument('--config_file',type=str,default=None);
 p.add_argument('--plotter',type=str, default='gmt')
 config = vars(p.parse_args())
 
@@ -79,7 +79,9 @@ if config['slip_output_file'] is not None:
       xy_geo_array.append(xy_geo);
 
     for i in range(3):  # write the patches and plot each component of slip
-      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],config['slip_output_file']+'_gmt')  # a plain text format
+      outfile = config['slip_output_file']+titles[i].split()[0]+'_gmt'
+      print("Writing slip to file %s" % outfile)
+      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],outfile)  # a plain text format
       cmin=min(slip[:,i])
       cmax=max(slip[:,i])
       print("Average %s slip is %f m" % (titles[i], np.sum(slip[:,i])/len(slip[:,i]) ) );
@@ -89,9 +91,9 @@ if config['slip_output_file'] is not None:
         cmax=1
         cntv=0.05
       title=titles[i].split()[0] 
-      command = "fault_plot.sh "+config['slip_output_file']+"_gmt "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file']+" "+config['output_dir'];
+      command = "fault_plot.sh "+outfile+" "+title+ " "+str(bm.llcrnrlon)+" "+str(bm.llcrnrlat)+" "+str(bm.urcrnrlon)+" "+str(bm.urcrnrlat)+" "+bm.proj+" "+str(cmin)+" "+str(cmax)+" "+str(cntv)+" "+config['observed_gps_file']+" "+config['predicted_gps_file']+" "+config['output_dir'];
       print(command);
-      subprocess.call(['fault_plot.sh',config['slip_output_file']+'_gmt',title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
+      subprocess.call(['fault_plot.sh',outfile,title,str(bm.llcrnrlon), str(bm.llcrnrlat), 
         str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, str(cmin), str(cmax), str(cntv),config['observed_gps_file'],config['predicted_gps_file'],config['output_dir']],shell=False);
 
   else:  # run python plotting
@@ -229,4 +231,8 @@ if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_
       str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling',config["output_dir"]],shell=False); 
 
 ### GET THE METRICS FOR THIS INVERSION
-slippy.metrics.main_function(config['config_file']);
+print(config.keys())
+if config['config_file'] is not None:
+  slippy.metrics.main_function(config['config_file']);
+else:
+  slippy.metrics.main_function(slip_output_file=config['slip_output_file'],summary_file=config["output_dir"]+"summary.txt");

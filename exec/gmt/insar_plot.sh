@@ -43,4 +43,4 @@ gmt psscale -Cmycpt.cpt -Dx-7c/-1c+w9c/0.5c+jTC+h -Bxaf+l"Disp" -By+l"mm" -K -O 
 rm mycpt.cpt
 rm gmt.history 
 rm temp_insar.txt
-open $output
+# open $output

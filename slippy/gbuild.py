@@ -2,7 +2,7 @@
 from slippy.okada import dislocation
 import numpy as np
 
-def build_system_matrix(pos,patches,disp_directions,slip_directions,Nleveling=0):
+def build_system_matrix(pos,patches,disp_directions,slip_directions,Nleveling=0,leveling=False, leveling_offset_sign=1):
   ''' 
   builds the system matrix 
 
@@ -29,7 +29,7 @@ def build_system_matrix(pos,patches,disp_directions,slip_directions,Nleveling=0)
   pos = np.asarray(pos)
   slip_directions = np.asarray(slip_directions)
   disp_directions = np.asarray(disp_directions)
-  ifleveling = Nleveling>0
+  ifleveling = Nleveling>0 or leveling
   
   G = np.zeros((len(pos),len(patches)+ifleveling))  # one extra column if leveling
 
@@ -44,7 +44,7 @@ def build_system_matrix(pos,patches,disp_directions,slip_directions,Nleveling=0)
   if ifleveling:
     vector_of_ones = np.zeros(np.shape(G[:,0]));
     for i in range(Nleveling):
-      vector_of_ones[i]=1;
+      vector_of_ones[i]=leveling_offset_sign;
     vector_of_ones=np.flipud(vector_of_ones);
     G[:,len(patches)]=vector_of_ones  
                                 

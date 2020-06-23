@@ -36,5 +36,5 @@ gmt psscale -Cmycpt.cpt -Dx7c/-1c+w12c/0.5c+jTC+h -Bxaf+l$title" slip" -By+l"m" 
 
 rm gmt.history 
 rm mycpt.cpt
-open $output
+# open $output
 

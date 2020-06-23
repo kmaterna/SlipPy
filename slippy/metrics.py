@@ -139,16 +139,22 @@ def mw_from_moment(moment):
 
 
 # -------- ACCESS FUNCTIONS ----------- # 
-def main_function(configfile):
+def main_function(configfile=None, slip_output_file=None, summary_file=None):
 	# If you have the name of your json, you can import/call this main function 
-	config=parse_json(configfile);
-	moments = get_slip_moment(config["slip_output_file"]);
-	misfits = get_total_misfit(config);
-	write_outputs(moments, misfits, config['summary_file']);
+	if configfile is not None:   # if you have the name of the complete json
+		config=parse_json(configfile);
+		slip_output_file = config["slip_output_file"];
+		summary_file = config["summary_file"];
+		misfits = get_total_misfit(config);
+	else:
+		misfits = [[None]];  # otherwise, things get messier
+	moments = get_slip_moment(slip_output_file);
+	write_outputs(moments, misfits, summary_file);
 	return;
+
 
 if __name__=="__main__":
 	configfile = welcome_and_parse(sys.argv);  # expects a config file passed in by argument
-	main_function(configfile);
+	main_function(configfile=configfile);
 
 
