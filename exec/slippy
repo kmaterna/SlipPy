@@ -65,6 +65,22 @@ p.add_argument('--basis3',nargs=3,type=float,
 p.add_argument('--penalty',type=float,
                help='''regularization damping parameter''')
 
+p.add_argument('--gps_strength',type=float,default=1,
+               help='''multiplicative factor of how highly gps data 
+               will be weighted relative to its abundance.''')
+
+p.add_argument('--insar_strength',type=float,default=1,
+               help='''multiplicative factor of how highly insar data 
+               will be weighted relative to its abundance.''')
+
+p.add_argument('--leveling_strength',type=float,default=1,
+               help='''multiplicative factor of how highly leveling data 
+               will be weighted relative to its abundance.''')
+
+p.add_argument('--leveling_sign',type=float,default=1,
+               help='''For non-negative least squares, 
+               leveling_offset = +1 or leveling_offset = -1.''')
+
 p.add_argument('--gps_input_file',type=str,
                help='''Name of the GPS input file. Must contain 
                one header row, which gets ignored, and 8 columns: 

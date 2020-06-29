@@ -58,6 +58,10 @@ def main(config):
   slip_output_file = get_output_filenames(config['output_dir'],config['slip_output_file'])
   alpha = config['alpha']
   plotter = config['plotter']
+  gps_strength = config['gps_strength']
+  insar_strength = config['insar_strength']
+  leveling_strength = config['leveling_strength']
+  leveling_sign = config['leveling_sign']
   
   # The overall objects
   obs_disp_f = np.zeros((0,))
@@ -65,6 +69,7 @@ def main(config):
   obs_pos_geo_f = np.zeros((0,3))  # going to contain gps and insar obs
   obs_basis_f = np.zeros((0,3))
   obs_pos_total = np.zeros((0,3))  # for the basemap
+  obs_weighting_f = np.zeros((0,))
 
   if gps_input_file is not None:
     gps_input = slippy.io.read_gps_data(gps_input_file)    
@@ -78,12 +83,14 @@ def main(config):
     obs_sigma_fi = obs_gps_sigma.reshape((Ngps*3,))
     obs_basis_fi = obs_gps_basis.reshape((Ngps*3,3))
     obs_pos_geo_fi = obs_gps_pos_geo[:,None,:].repeat(3,axis=1).reshape((Ngps*3,3))
+    obs_weighting_fi = (1/gps_strength) * np.ones((Ngps*3,));
     
     obs_disp_f = np.concatenate((obs_disp_f,obs_disp_fi),axis=0)
     obs_sigma_f = np.concatenate((obs_sigma_f,obs_sigma_fi),axis=0)
     obs_basis_f = np.concatenate((obs_basis_f,obs_basis_fi),axis=0)    
     obs_pos_geo_f = np.concatenate((obs_pos_geo_f,obs_pos_geo_fi),axis=0)
     obs_pos_total = np.concatenate((obs_pos_total,obs_pos_geo_fi),axis=0)
+    obs_weighting_f = np.concatenate((obs_weighting_f, obs_weighting_fi),axis=0)
     
   else:
     obs_gps_pos_geo = np.zeros((0,3))
@@ -99,12 +106,14 @@ def main(config):
     obs_insar_disp = insar_input[1]
     obs_insar_sigma = insar_input[2]
     obs_insar_basis = insar_input[3]
+    obs_weighting_fi = (1/insar_strength)*np.ones((Ninsar,));
 
     obs_disp_f = np.concatenate((obs_disp_f,obs_insar_disp),axis=0)
     obs_sigma_f = np.concatenate((obs_sigma_f,obs_insar_sigma),axis=0)
     obs_basis_f = np.concatenate((obs_basis_f,obs_insar_basis),axis=0)    
     obs_pos_geo_f = np.concatenate((obs_pos_geo_f,obs_insar_pos_geo),axis=0)
     obs_pos_total = np.concatenate((obs_pos_total,obs_insar_pos_geo),axis=0)
+    obs_weighting_f = np.concatenate((obs_weighting_f, obs_weighting_fi),axis=0)
   
   else:
     obs_insar_pos_geo = np.zeros((0,3))
@@ -120,13 +129,15 @@ def main(config):
     obs_leveling_disp = leveling_input[1]
     obs_leveling_sigma = leveling_input[2]
     obs_leveling_basis = leveling_input[3]
+    obs_weighting_fi = (1/leveling_strength) * np.ones((Nleveling,));
 
     obs_pos_total = np.concatenate((obs_pos_total,obs_leveling_pos_geo),axis=0)
     obs_disp_f = np.concatenate((obs_disp_f,obs_leveling_disp),axis=0)
     obs_sigma_f = np.concatenate((obs_sigma_f,obs_leveling_sigma),axis=0)   
     obs_basis_f = np.concatenate((obs_basis_f,obs_leveling_basis),axis=0)    
     obs_pos_geo_f = np.concatenate((obs_pos_geo_f,obs_leveling_pos_geo),axis=0)
-  
+    obs_weighting_f = np.concatenate((obs_weighting_f, obs_weighting_fi),axis=0)
+
   else:
     obs_leveling_pos_geo = np.zeros((0,3))
     obs_leveling_disp = np.zeros((0,))
@@ -208,10 +219,13 @@ def main(config):
                                         patches_f,
                                         obs_basis_f,
                                         slip_basis_f, 
-                                        Nleveling) 
+                                        Nleveling, 
+                                        leveling_offset_sign=leveling_sign) 
 
   ### weigh system matrix and data by the uncertainty
   ###################################################################  
+  G /= obs_weighting_f[:,None]
+  obs_disp_f /= obs_weighting_f
   G /= obs_sigma_f[:,None]
   obs_disp_f /= obs_sigma_f  
 
@@ -223,7 +237,7 @@ def main(config):
     ### estimate slip and compute predicted displacement
     #####################################################################
     slip_f = reg_nnls(G,L,alpha,obs_disp_f)
-    pred_disp_f = G.dot(slip_f)*obs_sigma_f 
+    pred_disp_f = G.dot(slip_f)*obs_sigma_f*obs_weighting_f # multiply by sigma to counteract the division for weighting
     slip_f = slip_f[0:-1];  # LEVELING: Will ignore the last model parameter, which is the leveling offset
     leveling_offset = slip_f[-1];
     slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
@@ -245,7 +259,7 @@ def main(config):
     ### estimate slip and compute predicted displacement
     #####################################################################
     slip_f = reg_nnls(G,L,alpha,obs_disp_f)
-    pred_disp_f = G.dot(slip_f)*obs_sigma_f 
+    pred_disp_f = G.dot(slip_f)*obs_sigma_f*obs_weighting_f   # multiply by sigma to counteract the division for weighting
     slip = slip_f.reshape((Ns_total,Ds))  # THIS ASSUMES ALL FAULTS HAVE THE SAME NUMBER OF BASIS VECTORS
     cardinal_slip = slippy.basis.cardinal_components(slip,total_fault_slip_basis)
 
