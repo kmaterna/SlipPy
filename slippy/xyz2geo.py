@@ -94,11 +94,11 @@ def create_default_basemap(lon_lst,lat_lst, proj='M5i', resolution='i'):
     
   lon_buff = (max(lon_lst) - min(lon_lst))/20.0
   lat_buff = (max(lat_lst) - min(lat_lst))/20.0
-  if lon_buff < 0.1:
-    lon_buff = 0.1
+  if lon_buff < 0.15:
+    lon_buff = 0.15
 
-  if lat_buff < 0.1:
-    lat_buff = 0.1
+  if lat_buff < 0.15:
+    lat_buff = 0.15
 
   llcrnrlon = min(lon_lst) - lon_buff
   llcrnrlat = min(lat_lst) - lat_buff

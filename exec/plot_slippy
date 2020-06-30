@@ -116,10 +116,15 @@ segment_drawn = False
 if (config['observed_gps_file'] is not 'None') | (config['predicted_gps_file'] is not 'None'):
   print("Plotting GPS observed and modeled displacements.")
   if config['plotter']=='gmt':  # gmt plotting of gps displacements, with fault shown
+    outfile = config['slip_output_file']+'total_gmt'
+    print("Writing slip to file %s" % outfile)
+    slip_total = np.sqrt(np.square(slip[:,0])+np.square(slip[:,1]));  # magnitude of total slip
+    slippy.patch.write_patches_geo(xy_geo_array, slip_total,outfile)  # a plain text format  
+
     pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])    
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
     subprocess.call(['quiver_plot.sh',config['observed_gps_file'],config['predicted_gps_file'],
-      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,config["output_dir"]],shell=False); 
+      str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, outfile,config["output_dir"]],shell=False); 
 
   else:  # python plotting of gps displacements
 
@@ -186,7 +191,7 @@ if (config['observed_insar_file'] is not None) | (config['predicted_insar_file']
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_insar_file'],config['predicted_insar_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
-      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','insar',config["output_dir"]],shell=False); 
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'total_gmt','insar',config["output_dir"]],shell=False); 
 
   else:  # python plotting of insar displacements
     fig,ax = plt.subplots()
@@ -228,10 +233,9 @@ if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i',proj="M3i")
     subprocess.call(['insar_plot.sh',config['observed_leveling_file'],config['predicted_leveling_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj,str(1000*np.nanmin(disp)),
-      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'_gmt','leveling',config["output_dir"]],shell=False); 
+      str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'total_gmt','leveling',config["output_dir"]],shell=False); 
 
 ### GET THE METRICS FOR THIS INVERSION
-print(config.keys())
 if config['config_file'] is not None:
   slippy.metrics.main_function(config['config_file']);
 else:
