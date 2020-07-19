@@ -48,12 +48,12 @@ def get_slip_moment(slip_filename):
 def get_total_misfit(config):
 	lev_misfit, lev_norm_misfit, insar_misfit, insar_norm_misfit, gps_misfit, gps_norm_misfit = None, None, None, None, None, None;
 	lev_npts, insar_npts, gps_npts = None, None, None;
-	if "leveling_input_file" in config.keys():
-		[lev_misfit, lev_norm_misfit, lev_npts] = get_misfit_leveling(config["leveling_input_file"],config["leveling_output_file"]);
-	if "insar_input_file" in config.keys():
-		[insar_misfit, insar_norm_misfit, insar_npts] = get_misfit_insar(config["insar_input_file"],config["insar_output_file"]);
-	if "gps_input_file" in config.keys():
-		[gps_misfit, gps_norm_misfit, gps_npts] = get_misfit_gps(config["gps_input_file"],config["gps_output_file"]);
+	if "observed_leveling_file" in config.keys():
+		[lev_misfit, lev_norm_misfit, lev_npts] = get_misfit_leveling(config["observed_leveling_file"],config["predicted_leveling_file"]);
+	if "observed_insar_file" in config.keys():
+		[insar_misfit, insar_norm_misfit, insar_npts] = get_misfit_insar(config["observed_insar_file"],config["predicted_insar_file"]);
+	if "observed_gps_file" in config.keys():
+		[gps_misfit, gps_norm_misfit, gps_npts] = get_misfit_gps(config["observed_gps_file"],config["predicted_gps_file"]);
 	return [gps_misfit, gps_norm_misfit, gps_npts, insar_misfit, insar_norm_misfit, insar_npts, lev_misfit, lev_norm_misfit, lev_npts];
 
 def get_misfit_gps(obs_file, pred_file):
@@ -139,22 +139,15 @@ def mw_from_moment(moment):
 
 
 # -------- ACCESS FUNCTIONS ----------- # 
-def main_function(configfile=None, slip_output_file=None, summary_file=None):
-	# If you have the name of your json, you can import/call this main function 
-	if configfile is not None:   # if you have the name of the complete json
-		config=parse_json(configfile);
-		slip_output_file = config["slip_output_file"];
-		summary_file = config["summary_file"];
-		misfits = get_total_misfit(config);
-	else:
-		misfits = [[None]];  # otherwise, things get messier
-	moments = get_slip_moment(slip_output_file);
-	write_outputs(moments, misfits, summary_file);
+def main_function(config):
+	misfits = get_total_misfit(config);
+	moments = get_slip_moment(config["slip_output_file"]);
+	write_outputs(moments, misfits, config["summary_file"]);
 	return;
 
 
 if __name__=="__main__":
 	configfile = welcome_and_parse(sys.argv);  # expects a config file passed in by argument
-	main_function(configfile=configfile);
+	# main_function(configfile=configfile);
 
 

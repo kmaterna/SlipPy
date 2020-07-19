@@ -46,5 +46,6 @@ gmt psvelo -A+e+gblack+pthickest -Wblack -Se$horiz_scale/0.68/10 -R$range -J$pro
 EOF
 
 rm mycpt.cpt
+rm slip.cpt
 rm gmt.history 
 open $output

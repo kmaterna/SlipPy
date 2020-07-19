@@ -39,9 +39,9 @@ p.add_argument('--observed_leveling_file',type=str);
 p.add_argument('--predicted_leveling_file',type=str);
 p.add_argument('--slip_output_file',type=str, default=None);
 p.add_argument('--output_dir',type=str,default='');
-p.add_argument('--config_file',type=str,default=None);
 p.add_argument('--plotter',type=str, default='gmt')
 config = vars(p.parse_args())
+config["summary_file"]=config["output_dir"]+"summary.txt"
 
 bm = None
 
@@ -236,7 +236,4 @@ if (config['observed_leveling_file'] is not None) | (config['predicted_leveling_
       str(1000*np.nanmax(disp)),str(1),str(config['slip_output_file'])+'total_gmt','leveling',config["output_dir"]],shell=False); 
 
 ### GET THE METRICS FOR THIS INVERSION
-if config['config_file'] is not None:
-  slippy.metrics.main_function(config['config_file']);
-else:
-  slippy.metrics.main_function(slip_output_file=config['slip_output_file'],summary_file=config["output_dir"]+"summary.txt");
+slippy.metrics.main_function(config);
