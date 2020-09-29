@@ -36,7 +36,7 @@ def main(config):
 
   # Repackage into a list of faults (each fault being a dict)
   fault_list = [];
-  for key in config["faults"].keys():
+  for i,key in enumerate(config["faults"].keys()):
     fault_segment = {
       "strike":config["faults"][key]["strike"],
       "dip":config["faults"][key]["dip"],
@@ -46,7 +46,8 @@ def main(config):
       "Nlength":config["faults"][key]["Nlength"],
       "Nwidth":config["faults"][key]["Nwidth"],
       "slip_basis":config["faults"][key]["basis"],
-      "penalty":config["faults"][key]["penalty"]};
+      "penalty":config["faults"][key]["penalty"],
+      "name":i};
     fault_list.append(fault_segment)
 
   gps_input_file = config['gps_input_file']  
@@ -168,7 +169,8 @@ def main(config):
   total_fault_slip_basis=[];
   patches_f = [];
   L_array = [];
-  Ns_total=0;
+  Ns_total = 0;
+  fault_names_array = []; 
   
   # Set up the map for the calculation
   bm = plotting_library.create_default_basemap(obs_pos_total[:,0],obs_pos_total[:,1]) 
@@ -195,11 +197,14 @@ def main(config):
       total_fault_slip_basis=np.concatenate((total_fault_slip_basis, single_fault_slip_basis),axis=0)
     single_fault_silp_basis_f = single_fault_slip_basis.reshape((Ns*Ds,3))
 
-    # Packaging of slip_basis_f
+    # Packaging of slip_basis_f and fault patch naming
     single_fault_patches_f = single_fault_patches[:,None].repeat(Ds,axis=1).reshape((Ns*Ds,))
     patches=np.concatenate((patches,single_fault_patches),axis=0)
     patches_f=np.concatenate((patches_f,single_fault_patches_f),axis=0)
     slip_basis_f=np.concatenate((slip_basis_f, single_fault_silp_basis_f),axis=0);
+    name_for_patch = np.array([fault["name"]]);
+    names_for_patch = name_for_patch.repeat(Ns);
+    fault_names_array=np.concatenate((fault_names_array, names_for_patch), axis=0);
 
     ### build regularization matrix
     L = np.zeros((0,Ns*Ds))
@@ -283,7 +288,7 @@ def main(config):
   slippy.io.write_slip_data(patches_pos_geo,
                             patches_strike,patches_dip,
                             patches_length,patches_width,
-                            cardinal_slip,slip_output_file)
+                            cardinal_slip,fault_names_array,slip_output_file)
 
   slippy.io.write_gps_data(obs_gps_pos_geo, 
                            pred_disp_gps,0.0*pred_disp_gps,

@@ -44,7 +44,7 @@ def read_slip_data(file_name):
   -----------
 
     HEADER
-    lon[degrees] lat[degrees] height[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m]
+    lon[degrees] lat[degrees] height[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m] segment_num
   '''
   data = np.loadtxt(file_name,skiprows=1)
   pos_geodetic = data[:,[0,1,2]]
@@ -53,7 +53,8 @@ def read_slip_data(file_name):
   length = data[:,5]
   width = data[:,6]
   slip = data[:,[7,8,9]]
-  return pos_geodetic,strike,dip,length,width,slip
+  names = data[:,10]
+  return pos_geodetic,strike,dip,length,width,slip,names
   
 
 def write_gps_data(pos_geodetic,disp,sigma,file_name):
@@ -95,13 +96,13 @@ def write_insar_data(pos_geodetic,disp,sigma,basis,file_name):
   return
 
 
-def write_slip_data(pos_geodetic,strike,dip,length,width,slip,file_name):  
+def write_slip_data(pos_geodetic,strike,dip,length,width,slip,names,file_name):  
   ''' 
   FILE FORMAT
   -----------
 
     HEADER
-    lon[degrees] lat[degrees] depth[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m]
+    lon[degrees] lat[degrees] depth[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m] segment_num
   '''
   pos_geodetic = np.asarray(pos_geodetic)
   strike = np.asarray(strike)
@@ -109,9 +110,10 @@ def write_slip_data(pos_geodetic,strike,dip,length,width,slip,file_name):
   length = np.asarray(length)
   width = np.asarray(width)
   slip = np.asarray(slip)
+  names = np.asarray(names)
 
   data = np.hstack((pos_geodetic,strike[:,None],
-                    dip[:,None],length[:,None],width[:,None],slip))
-  header = "lon[degrees] lat[degrees] depth[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m]"
-  np.savetxt(file_name,data,header=header,fmt='%0.4f')
+                    dip[:,None],length[:,None],width[:,None],slip,names[:,None]))
+  header = "lon[degrees] lat[degrees] depth[m] strike[degrees] dip[degrees] length[m] width[m] left-lateral[m] thrust[m] tensile[m] segment_num"
+  np.savetxt(file_name,data,header=header,fmt='%0.4f %0.4f %0.4f %0.4f %0.4f %0.4f %0.4f %0.4f %0.4f %0.4f %d')
   return

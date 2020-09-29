@@ -25,6 +25,7 @@ gmt makecpt -T$cmin/$cmax/$cntv -Cwysiwyg > mycpt.cpt
 # Plotting the slip distribution
 gmt pscoast -R$range -J$proj -Wthin,black -Di -N1 -N2 -B1.0 -Y4 -Gwhite -Slightgray -K > $output
 gmt psxy $slip_file -R$range -J$proj -Wthinnest,gray -Cmycpt.cpt -L -K -O >> $output
+gmt psxy $slip_file"_shallowedge" -R$range -J$proj -Wthicker,black -L -K -O >> $output
 
 # Plotting obs. vs. data
 horiz_scale=100

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+import os, sys
 import argparse
 import slippy.bm
 import slippy.xyz2geo
@@ -31,12 +31,12 @@ def draw_grid(bm,spacing=1.0,**kwargs):
 p = argparse.ArgumentParser(
       description='''Plots the results of SlipPy''')
       
-p.add_argument('--observed_gps_file',type=str, default='None');
-p.add_argument('--predicted_gps_file',type=str, default='None');
-p.add_argument('--observed_insar_file',type=str);
-p.add_argument('--predicted_insar_file',type=str);
-p.add_argument('--observed_leveling_file',type=str);
-p.add_argument('--predicted_leveling_file',type=str);
+p.add_argument('--observed_gps_file',type=str, default=None);
+p.add_argument('--predicted_gps_file',type=str, default=None);
+p.add_argument('--observed_insar_file',type=str, default=None);
+p.add_argument('--predicted_insar_file',type=str, default=None);
+p.add_argument('--observed_leveling_file',type=str, default=None);
+p.add_argument('--predicted_leveling_file',type=str, default=None);
 p.add_argument('--slip_output_file',type=str, default=None);
 p.add_argument('--output_dir',type=str,default='');
 p.add_argument('--plotter',type=str, default='gmt')
@@ -62,6 +62,7 @@ if config['slip_output_file'] is not None:
   length = input[3]
   width = input[4]
   slip = input[5]
+  fault_nums = input[6]
   patches = [slippy.patch.Patch(p,l,w,s,d) for p,l,w,s,d in zip(pos_cart,
                                                                 length,width,
                                                                 strike,dip)]
@@ -73,15 +74,19 @@ if config['slip_output_file'] is not None:
     xy_geo_array=[]
     fig = plt.figure(figsize=(14,14),dpi=300);
     for p in patches:  # put the patch vertices into geodetic coordinates
-      polys=p.get_polygon()
-      xy_cart=polys.get_xy()
+      poly=p.get_polygon()
+      xy_cart=poly.get_xy()
       xy_geo = slippy.xyz2geo.cartesian_to_geodetic(xy_cart,bm)
       xy_geo_array.append(xy_geo);
+    shallow_edges_cart = slippy.patch.get_shallow_edges(patches, fault_nums); 
+    shallow_edges_geo = slippy.xyz2geo.cartesian_to_geodetic(shallow_edges_cart,bm)
 
     for i in range(3):  # write the patches and plot each component of slip
       outfile = config['slip_output_file']+titles[i].split()[0]+'_gmt'
-      print("Writing slip to file %s" % outfile)
-      slippy.patch.write_patches_geo(xy_geo_array, slip[:,i],outfile)  # a plain text format
+      shallow_edge_file = config['slip_output_file']+titles[i].split()[0]+'_gmt_shallowedge'
+      slippy.patch.write_patch_edges_geo(xy_geo_array, slip[:,i],outfile)  # a plain text format necessary for GMT plotting
+      slippy.patch.write_shallow_edges_geo(shallow_edges_geo, shallow_edge_file);  # a plain text format
+
       cmin=min(slip[:,i])
       cmax=max(slip[:,i])
       print("Average %s slip is %f m" % (titles[i], np.sum(slip[:,i])/len(slip[:,i]) ) );
@@ -113,19 +118,18 @@ if config['slip_output_file'] is not None:
 bm = None
 key_drawn = False
 segment_drawn = False
-if (config['observed_gps_file'] is not 'None') | (config['predicted_gps_file'] is not 'None'):
+if (config['observed_gps_file'] is not None) | (config['predicted_gps_file'] is not None):
   print("Plotting GPS observed and modeled displacements.")
   if config['plotter']=='gmt':  # gmt plotting of gps displacements, with fault shown
     outfile = config['slip_output_file']+'total_gmt'
     print("Writing slip to file %s" % outfile)
     slip_total = np.sqrt(np.square(slip[:,0])+np.square(slip[:,1]));  # magnitude of total slip
-    slippy.patch.write_patches_geo(xy_geo_array, slip_total,outfile)  # a plain text format  
+    slippy.patch.write_patch_edges_geo(xy_geo_array, slip_total,outfile)  # a plain text format  
 
     pos_geo,disp,sigma = slippy.io.read_gps_data(config['observed_gps_file'])    
     bm = slippy.xyz2geo.create_default_basemap(pos_geo[:,0],pos_geo[:,1],resolution='i')
     subprocess.call(['quiver_plot.sh',config['observed_gps_file'],config['predicted_gps_file'],
       str(bm.llcrnrlon), str(bm.llcrnrlat), str(bm.urcrnrlon), str(bm.urcrnrlat), bm.proj, outfile,config["output_dir"]],shell=False); 
-
   else:  # python plotting of gps displacements
 
     fig,ax = plt.subplots()
@@ -180,7 +184,6 @@ if (config['observed_gps_file'] is not 'None') | (config['predicted_gps_file'] i
         segment_drawn = True  
 
     fig.savefig('gps.jpg');    
-
 
 ### NEW FIGURE: INSAR DISPLACEMENTS
 bm = None

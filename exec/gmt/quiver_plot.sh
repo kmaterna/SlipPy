@@ -48,4 +48,4 @@ EOF
 rm mycpt.cpt
 rm slip.cpt
 rm gmt.history 
-open $output
+# open $output

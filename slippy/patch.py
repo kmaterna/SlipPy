@@ -140,6 +140,16 @@ class Patch:
                                [0.0,1.0,0.0]])
     poly = Polygon(vert[:,[0,1]],**kwargs)     
     return poly
+
+  def get_3d_polygon(self):
+    '''
+    returns a vector of 3 floats
+    '''
+    verts_3vector = self.patch_to_user([[0.0, 0.0, 0.0],
+                                        [1.0, 0.0, 0.0],
+                                        [1.0, 1.0, 0.0],
+                                        [0.0, 1.0, 0.0]])
+    return verts_3vector  
       
 def draw_patches(patch_list,colors=None,ax=None,**kwargs):
   ''' 
@@ -166,12 +176,46 @@ def draw_patches(patch_list,colors=None,ax=None,**kwargs):
   ax.add_collection(pc)
   return pc 
 
+
+def get_shallow_edges(patch_list, fault_nums):
+  '''
+  Inputs are a patch list (in cartesian)
+  Returns a list of coordinates of the shallow edges (in cartesian)
+  '''
+  shallow_edge_list = [];
+  for i in range(len(set(fault_nums))):
+    segment_patch_list = []
+    verts_list = [];
+    shallow_points = [];
+    shallow_x = []; 
+    shallow_y = []; 
+    for j in range(len(fault_nums)):
+      if fault_nums[j] == i:
+        segment_patch_list.append(patch_list[j]);
+    for p in segment_patch_list:
+      verts_list += [p.get_3d_polygon()];  
+    for p in verts_list:
+      shallow_points.append(p[2][2]);  # extract the shallowest point of each patch
+    shallow_limit = np.max(shallow_points);
+    for i in range(len(verts_list)):
+      if verts_list[i][2][2] == shallow_limit:
+        shallow_x.append(verts_list[i][2][0])
+        shallow_x.append(verts_list[i][3][0])
+        shallow_y.append(verts_list[i][2][1])
+        shallow_y.append(verts_list[i][3][1])
+    minpoint = [np.min(shallow_x), np.min(shallow_y)];
+    maxpoint = [np.max(shallow_x), np.max(shallow_y)];
+    one_shallow_edge = [minpoint, maxpoint];
+    shallow_edge_list.append(one_shallow_edge);
+  return shallow_edge_list;
+
   
-def write_patches_geo(vertex_array, colornumber, outfile):
-  # Write the lat and lon coordinates of the patch into a plain text file      
+def write_patch_edges_geo(xy_array, colornumber, outfile):
+  # Write the lat and lon coordinates of the patch into a plain text file    
+  print("Writing slip patches out to %s " % outfile);  
   ofile=open(outfile,'w')
-  for i in range(len(vertex_array)):
-    xy=vertex_array[i]
+  for i in range(len(xy_array)):
+    xy=xy_array[i]
     ofile.write("> -Z%.4f\n" % colornumber[i])
     ofile.write("%.4f %.4f\n" % (xy[0][0], xy[0][1]) )
     ofile.write("%.4f %.4f\n" % (xy[1][0], xy[1][1]) )
@@ -181,7 +225,15 @@ def write_patches_geo(vertex_array, colornumber, outfile):
   ofile.close()
   return
     
-
-
+def write_shallow_edges_geo(xy_array, outfile):
+  # Write the shallow edges of faults
+  ofile = open(outfile, 'w');
+  for i in range(len(xy_array)):
+    xy = xy_array[i];
+    ofile.write("> \n");
+    ofile.write('%.4f %.4f\n' % (xy[0][0], xy[0][1]) );
+    ofile.write('%.4f %.4f\n' % (xy[1][0], xy[1][1]) );
+  ofile.close();
+  return;
 
 

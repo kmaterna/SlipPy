@@ -41,11 +41,11 @@ def get_slip_moment(slip_filename):
 		momenti = moment_from_muad(mu, area, slip);
 		moment_total = moment_total+momenti;
 	mw = mw_from_moment(moment_total);
-	print("Calculating metrics for inversion results.");
 	print("Calculating moment from %s" % slip_filename);
 	return [moment_total, mw];
 
 def get_total_misfit(config):
+	print("Calculating metrics for inversion results.");
 	lev_misfit, lev_norm_misfit, insar_misfit, insar_norm_misfit, gps_misfit, gps_norm_misfit = None, None, None, None, None, None;
 	lev_npts, insar_npts, gps_npts = None, None, None;
 	if "observed_leveling_file" in config.keys():
@@ -59,6 +59,8 @@ def get_total_misfit(config):
 def get_misfit_gps(obs_file, pred_file):
 	# Misfit from each data pair (GPS, UAVSAR, Leveling, S1, TSX)
 	# Want in both absolute numbers and relative to the respective uncertainties. 
+	if obs_file is None or pred_file is None:
+		return [None, None, None];
 	gps_input = slippy.io.read_gps_data(obs_file); 
 	gps_pred = slippy.io.read_gps_data(pred_file); 
 	abs_misfit = np.abs(gps_input[1]-gps_pred[1]);
@@ -71,6 +73,8 @@ def get_misfit_gps(obs_file, pred_file):
 def get_misfit_insar(obs_file, pred_file):
 	# Misfit from each data pair (GPS, UAVSAR, Leveling, S1, TSX)
 	# Want in both absolute numbers and relative to the respective uncertainties. 
+	if obs_file is None or pred_file is None:
+		return [None, None, None];	
 	insar_input = slippy.io.read_insar_data(obs_file)
 	insar_pred = slippy.io.read_insar_data(pred_file)
 	abs_misfit = np.abs(insar_input[1]-insar_pred[1]);
@@ -83,6 +87,8 @@ def get_misfit_insar(obs_file, pred_file):
 def get_misfit_leveling(obs_file, pred_file):
 	# Misfit from each data pair (GPS, UAVSAR, Leveling, S1, TSX)
 	# Want in both absolute numbers and relative to the respective uncertainties. 
+	if obs_file is None or pred_file is None:
+		return [None, None, None];	
 	leveling_input = slippy.io.read_insar_data(obs_file)
 	leveling_pred = slippy.io.read_insar_data(pred_file)
 	abs_misfit = np.abs(leveling_input[1]-leveling_pred[1]);
